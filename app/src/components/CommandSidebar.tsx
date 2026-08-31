@@ -2,14 +2,10 @@
 
 import Link from "next/link";
 import {
-  FileText,
+  TrendingUp,
   Package,
-  Wallet,
-  Mail,
-  Sparkles,
-  ShieldCheck,
-  MessageSquare,
   LayoutGrid,
+  Sparkles,
   LayoutDashboard,
   X,
   type LucideIcon,
@@ -17,20 +13,13 @@ import {
 import { cn } from "@/lib/utils";
 
 const focusRing =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-950";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-950";
 
 export const sidebarModules: { href: string; title: string; icon: LucideIcon }[] = [
-  { href: "/document-ai", title: "Document AI", icon: FileText },
-  { href: "/dashboard", title: "Warehouse Visibility", icon: Package },
-  { href: "/payroll", title: "Payroll Visibility", icon: Wallet },
-  { href: "/email-setup", title: "Email Setup Dashboard", icon: Mail },
-  { href: "/assistant", title: "AI Assistant", icon: Sparkles },
-];
-
-const otherLinks: { href: string; title: string; icon: LucideIcon }[] = [
-  { href: "/status", title: "Status Integrasi", icon: ShieldCheck },
-  { href: "/chat", title: "Aktivitas", icon: MessageSquare },
-  { href: "/menu", title: "Tampilan Klasik", icon: LayoutGrid },
+  { href: "/sales", title: "Sales", icon: TrendingUp },
+  { href: "/inventory", title: "Inventory", icon: Package },
+  { href: "/products", title: "Products", icon: LayoutGrid },
+  { href: "/assistant", title: "AI Business Partner", icon: Sparkles },
 ];
 
 function NavItem({ href, title, icon: Icon, onNavigate }: { href: string; title: string; icon: LucideIcon; onNavigate?: () => void }) {
@@ -67,10 +56,10 @@ export function CommandSidebar({ open, onClose }: { open: boolean; onClose: () =
       >
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/60 px-4 dark:border-white/10">
           <Link href="/" onClick={onClose} className={cn("flex items-center gap-2 rounded-lg", focusRing)}>
-            <span className="inline-flex items-center gap-2 rounded bg-red-700 px-2.5 py-1">
-              <span className="text-xs font-bold text-white">ITS</span>
+            <span className="inline-flex items-center gap-2 rounded bg-emerald-700 px-2.5 py-1">
+              <span className="text-xs font-bold text-white">S</span>
             </span>
-            <span className="text-sm font-semibold">Command Center</span>
+            <span className="text-sm font-semibold">Smesh AI</span>
           </Link>
           <button
             type="button"
@@ -87,20 +76,12 @@ export function CommandSidebar({ open, onClose }: { open: boolean; onClose: () =
 
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
           <div className="space-y-0.5">
-            <NavItem href="/" title="Dashboard" icon={LayoutDashboard} onNavigate={onClose} />
+            <NavItem href="/" title="Overview" icon={LayoutDashboard} onNavigate={onClose} />
           </div>
           <div>
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Modul</p>
             <div className="mt-1 space-y-0.5">
               {sidebarModules.map((m) => (
-                <NavItem key={m.href} {...m} onNavigate={onClose} />
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-500">Lainnya</p>
-            <div className="mt-1 space-y-0.5">
-              {otherLinks.map((m) => (
                 <NavItem key={m.href} {...m} onNavigate={onClose} />
               ))}
             </div>

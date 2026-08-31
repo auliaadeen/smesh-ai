@@ -1,381 +1,164 @@
-"use client";
-
-import { useMemo } from "react";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
-import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from "recharts";
-import {
-  FileText,
-  Mail,
-  LayoutGrid,
-  ArrowRight,
-  CheckCircle2,
-  XCircle,
-  HelpCircle,
-  AlertTriangle,
-  Package,
-  Wallet,
-  ShieldCheck,
-  Radio,
-  Sparkles,
-} from "lucide-react";
+import { Sparkles, TrendingUp, Trophy, AlertTriangle, ArrowRight, ShoppingBag, Package, LayoutGrid } from "lucide-react";
 import { Card, KpiCard } from "@/components/ui/Card";
-import { MiniSlackChannelView } from "@/components/MiniSlackChannelView";
-import { useMiniSlack } from "@/lib/MiniSlackContext";
-import { computeDashboardStats } from "@/lib/dashboardStats";
-import { systemStatusList, type SystemStatus } from "@/lib/systemStatus";
-import { mockWeeklyTrend } from "@/lib/mockData";
-import { cn } from "@/lib/utils";
+import { mockBusinessRepository } from "@/repositories/mock-business-repository";
+
+function formatRupiah(value: number): string {
+  return `Rp${value.toLocaleString("id-ID")}`;
+}
 
 const modules = [
-  { href: "/document-ai", title: "Document AI", desc: "OCR & ekstraksi field otomatis dari PDF", icon: FileText },
-  { href: "/dashboard", title: "Warehouse Visibility", desc: "Stok tiga gudang dalam satu layar", icon: Package },
-  { href: "/payroll", title: "Payroll Visibility", desc: "Absensi, cuti, payroll engine", icon: Wallet },
-  { href: "/email-setup", title: "Email Setup Dashboard", desc: "Cloudflare + Gmail + Brevo, free-tier", icon: Mail },
-  { href: "/assistant", title: "AI Assistant", desc: "Tanya kondisi semua modul, jawab natural language", icon: Sparkles },
+  { href: "/sales", title: "Sales", desc: "Omzet, growth, tren penjualan", icon: TrendingUp },
+  { href: "/inventory", title: "Inventory", desc: "Stok kritis & rekomendasi reorder", icon: Package },
+  { href: "/products", title: "Products", desc: "Performa & kontribusi tiap produk", icon: LayoutGrid },
 ];
 
-const iconFor: Record<SystemStatus, typeof CheckCircle2> = {
-  Terhubung: CheckCircle2,
-  Terputus: XCircle,
-  "Belum Terintegrasi": HelpCircle,
-};
+export default async function CommandCenter() {
+  const [today, comparison, bestSellers, alerts] = await Promise.all([
+    mockBusinessRepository.getTodaySales(),
+    mockBusinessRepository.getSalesComparison(),
+    mockBusinessRepository.getBestSellers(3),
+    mockBusinessRepository.getInventoryAlerts(),
+  ]);
 
-const statusDotFor: Record<SystemStatus, string> = {
-  Terhubung: "bg-emerald-500",
-  Terputus: "bg-red-500",
-  "Belum Terintegrasi": "bg-amber-500",
-};
-
-const HARI_ORDER = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
-
-const focusRing =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-950";
-
-export default function CommandCenter() {
-  const { messages } = useMiniSlack();
-  const { dokumenDiproses, payrollDifinalisasi, emailSetupEvents, gudangKritis, totalGudang } =
-    computeDashboardStats(messages);
-  const prefersReducedMotion = useReducedMotion();
-
-  const statusCounts = systemStatusList.reduce(
-    (acc, s) => {
-      acc[s.status] += 1;
-      return acc;
-    },
-    { Terhubung: 0, Terputus: 0, "Belum Terintegrasi": 0 } as Record<SystemStatus, number>
-  );
-
-  const weeklyActivity = useMemo(() => {
-    const byHari = new Map<string, number>();
-    for (const r of mockWeeklyTrend) {
-      byHari.set(r.hari, (byHari.get(r.hari) ?? 0) + r.masuk);
-    }
-    return HARI_ORDER.map((hari) => ({ hari, masuk: byHari.get(hari) ?? 0 }));
-  }, []);
-
-  const peakDay = useMemo(
-    () => weeklyActivity.reduce((a, b) => (b.masuk > a.masuk ? b : a), weeklyActivity[0]),
-    [weeklyActivity]
-  );
+  const growthUp = comparison.growthPercentage >= 0;
+  const topSeller = bestSellers[0];
+  const topAlert = alerts[0];
 
   return (
-    <>
-      {/* Hero + KPI zone — vibrant ambient background so the glass cards read as glass */}
-      <div className="relative overflow-hidden">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-          <motion.div
-            className="absolute -top-32 -left-24 h-80 w-80 rounded-full bg-red-500/25 blur-3xl dark:bg-red-500/15"
-            animate={prefersReducedMotion ? undefined : { x: [0, 20, 0], y: [0, 15, 0] }}
-            transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="absolute -top-10 right-0 h-96 w-96 rounded-full bg-indigo-500/15 blur-3xl dark:bg-indigo-500/10"
-            animate={prefersReducedMotion ? undefined : { x: [0, -15, 0], y: [0, 20, 0] }}
-            transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-amber-400/10 blur-3xl" />
+    <main className="min-h-screen bg-white px-6 py-10 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 md:px-12">
+      <div className="mx-auto max-w-5xl">
+        <p className="text-sm font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+          Business Command Center
+        </p>
+        <h1 className="mt-1 text-3xl font-bold md:text-4xl">Selamat datang kembali 👋</h1>
+        <p className="mt-2 max-w-xl text-neutral-600 dark:text-neutral-400">
+          Berikut kondisi bisnis Toko Sejahtera hari ini — Demo Business Data.
+        </p>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href="/assistant"
+            className="flex items-center gap-2 rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-800"
+          >
+            <Sparkles className="h-4 w-4" /> Tanya Smesh
+          </Link>
         </div>
 
-        <div className="relative mx-auto max-w-5xl px-6 pt-6 md:px-10">
-          {/* Hero */}
-          <div className="grid grid-cols-1 gap-8 pb-16 lg:grid-cols-5 lg:items-center">
-              <div className="lg:col-span-3">
-                <p className="text-xs font-semibold uppercase tracking-widest text-red-600 dark:text-red-400">
-                  HTI Digital Operations
-                </p>
-                <h1 className="mt-2 text-4xl font-bold tracking-tight md:text-5xl">Command Center</h1>
-                <p className="mt-3 max-w-xl text-base text-neutral-600 dark:text-neutral-400">
-                  Semua modul operasional — dokumen, gudang, payroll, email, dan AI Assistant — dalam satu layar
-                  yang jelas dan siap dipakai.
-                </p>
-                <div className="mt-6 flex flex-wrap items-center gap-3">
-                  <Link
-                    href="#modul"
-                    className={cn(
-                      "rounded-full bg-red-700 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-800",
-                      focusRing
-                    )}
-                  >
-                    Buka Modul
-                  </Link>
-                  <Link
-                    href="/assistant"
-                    className={cn(
-                      "rounded-full border border-neutral-300 bg-white/50 px-5 py-2.5 text-sm font-medium text-neutral-700 backdrop-blur transition-colors hover:border-neutral-400 hover:text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900/40 dark:text-neutral-300 dark:hover:border-neutral-500 dark:hover:text-white",
-                      focusRing
-                    )}
-                  >
-                    Tanya AI Assistant
-                  </Link>
-                </div>
-              </div>
-
-              <motion.div
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                className="lg:col-span-2"
-              >
-                <Card className="shadow-xl shadow-red-950/5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                      Ringkasan Operasional
-                    </p>
-                    <span className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-                      <span className="relative flex h-2 w-2">
-                        <span
-                          className={cn(
-                            "absolute inline-flex h-full w-full rounded-full bg-emerald-400",
-                            !prefersReducedMotion && "animate-ping"
-                          )}
-                        />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                      </span>
-                      Tersinkron
-                    </span>
-                  </div>
-
-                  <div className="mt-4 h-28 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={weeklyActivity} margin={{ top: 4, right: 14, left: 8, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="heroActivityFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#dc2626" stopOpacity={0.45} />
-                            <stop offset="100%" stopColor="#dc2626" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <XAxis
-                          dataKey="hari"
-                          stroke="#8a8a8a"
-                          fontSize={11}
-                          tickLine={false}
-                          axisLine={false}
-                          interval={0}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            background: "var(--tooltip-bg)",
-                            color: "var(--tooltip-fg)",
-                            border: "1px solid var(--tooltip-border)",
-                            borderRadius: 8,
-                            fontSize: 12,
-                          }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="masuk"
-                          stroke="#dc2626"
-                          strokeWidth={2}
-                          fill="url(#heroActivityFill)"
-                          name="Barang masuk"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <p className="sr-only">
-                    Grafik aktivitas gudang mingguan. Puncak pada hari {peakDay.hari} dengan {peakDay.masuk} unit
-                    barang masuk.
-                  </p>
-                  <p className="mt-1 text-xs text-neutral-500">
-                    Barang masuk gudang, 7 hari terakhir — puncak {peakDay.hari}
-                  </p>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3 border-t border-neutral-200/70 pt-4 dark:border-neutral-700/50">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" aria-hidden="true" />
-                      <div>
-                        <p className="text-sm font-semibold tabular-nums">{dokumenDiproses}</p>
-                        <p className="text-[11px] text-neutral-500">Dokumen diproses</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" aria-hidden="true" />
-                      <div>
-                        <p className="text-sm font-semibold tabular-nums">{emailSetupEvents}</p>
-                        <p className="text-[11px] text-neutral-500">Request email setup</p>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            </div>
-
-            {/* KPI strip — overlaps the hero's bottom edge for a layered dashboard feel */}
-            <div className="relative z-10 -mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <KpiCard
-                icon={FileText}
-                label="Dokumen Diproses"
-                value={String(dokumenDiproses)}
-                sub="Sesi ini — Document AI"
-              />
-              <KpiCard
-                icon={Wallet}
-                label="Status Payroll"
-                value={payrollDifinalisasi ? "Difinalisasi" : "Belum Dijalankan"}
-                sub="Periode berjalan"
-              />
-              <KpiCard
-                icon={Mail}
-                label="Request Email Setup"
-                value={String(emailSetupEvents)}
-                sub="Event tercatat sesi ini"
-              />
-              <KpiCard
-                icon={gudangKritis > 0 ? AlertTriangle : Package}
-                label="Gudang Stok Kritis"
-                value={`${gudangKritis} dari ${totalGudang}`}
-                sub="Di bawah ambang batas"
-              />
-            </div>
-          </div>
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard label="Omzet Hari Ini" value={formatRupiah(today.revenue)} />
+          <KpiCard
+            label="Growth"
+            value={`${comparison.growthPercentage >= 0 ? "+" : ""}${comparison.growthPercentage.toFixed(1)}%`}
+            sub={`vs ${comparison.comparisonPeriod}`}
+            delta={growthUp ? "naik" : "turun"}
+            deltaPositive={growthUp}
+          />
+          <KpiCard label="Transaksi" value={today.orders.toLocaleString("id-ID")} sub={`${today.unitsSold} unit terjual`} />
+          <KpiCard
+            icon={alerts.length > 0 ? AlertTriangle : undefined}
+            label="Inventory Alerts"
+            value={String(alerts.length)}
+            sub="Produk perlu direstock"
+          />
         </div>
 
-        <div className="mx-auto max-w-5xl px-6 pb-10 md:px-10">
-          {/* Trust badges — system integration status */}
-          <Card className="mt-6">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-neutral-500" aria-hidden="true" />
-                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  Terintegrasi dengan Sistem Operasional
-                </p>
-                <span className="text-xs text-neutral-500">
-                  {statusCounts.Terhubung} terhubung
-                  {statusCounts.Terputus > 0 && ` · ${statusCounts.Terputus} terputus`}
-                  {statusCounts["Belum Terintegrasi"] > 0 && ` · ${statusCounts["Belum Terintegrasi"]} belum`}
-                </span>
-              </div>
-              <Link
-                href="/status"
-                className={cn(
-                  "shrink-0 rounded text-xs text-blue-600 hover:text-blue-500 dark:text-blue-400",
-                  focusRing
-                )}
-              >
-                Detail &rarr;
-              </Link>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {systemStatusList.map((s) => {
-                const Icon = iconFor[s.status];
+        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <p className="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">Modul</p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {modules.map((m) => {
+                const Icon = m.icon;
                 return (
                   <Link
-                    key={s.nama}
-                    href="/status"
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-full border border-white/60 bg-white/50 px-3 py-1.5 text-xs backdrop-blur transition-colors hover:border-neutral-400 dark:border-white/10 dark:bg-neutral-900/40 dark:hover:border-neutral-600",
-                      focusRing
-                    )}
+                    key={m.href}
+                    href={m.href}
+                    className="group flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-5 transition-colors hover:border-emerald-600/60 dark:border-neutral-800 dark:bg-neutral-900/40"
                   >
-                    <Icon
-                      aria-hidden="true"
-                      className={
-                        s.status === "Terhubung"
-                          ? "h-3.5 w-3.5 text-emerald-500"
-                          : s.status === "Terputus"
-                          ? "h-3.5 w-3.5 text-red-500"
-                          : "h-3.5 w-3.5 text-amber-500"
-                      }
-                    />
-                    {s.nama}
-                    <span className={cn("h-1.5 w-1.5 rounded-full", statusDotFor[s.status])} aria-hidden="true" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-700/10 text-emerald-600 dark:text-emerald-400">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-neutral-900 group-hover:text-emerald-700 dark:text-white">{m.title}</p>
+                      <p className="mt-1 text-sm text-neutral-500">{m.desc}</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-neutral-400 opacity-0 transition-opacity group-hover:opacity-100" />
                   </Link>
                 );
               })}
             </div>
-          </Card>
 
-          <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-            {/* Feature highlights */}
-            <div id="modul" className="scroll-mt-8 lg:col-span-2">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Modul</p>
-                <Link
-                  href="/menu"
-                  className={cn(
-                    "flex items-center gap-1 rounded text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
-                    focusRing
-                  )}
-                >
-                  <LayoutGrid className="h-3.5 w-3.5" /> Tampilan klasik
-                </Link>
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {modules.map((m, i) => {
-                  const Icon = m.icon;
-                  return (
-                    <motion.div
-                      key={m.href}
-                      initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.25, delay: prefersReducedMotion ? 0 : i * 0.04, ease: "easeOut" }}
-                    >
-                      <Link
-                        href={m.href}
-                        className={cn(
-                          "group flex h-full items-start gap-4 rounded-xl border border-white/60 bg-white/50 p-6 backdrop-blur-xl transition-colors hover:border-red-700/60 hover:bg-white/70 active:scale-[0.99] dark:border-white/10 dark:bg-neutral-900/40 dark:hover:bg-neutral-900/60",
-                          focusRing
-                        )}
-                      >
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-red-700/10 text-red-600 dark:text-red-400">
-                          <Icon className="h-5 w-5" aria-hidden="true" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h2 className="text-lg font-semibold text-neutral-900 group-hover:text-red-700 dark:text-white dark:group-hover:text-red-100">
-                            {m.title}
-                          </h2>
-                          <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">{m.desc}</p>
-                        </div>
-                        <ArrowRight
-                          aria-hidden="true"
-                          className="mt-1 h-4 w-4 shrink-0 text-neutral-400 opacity-0 transition-opacity group-hover:opacity-100"
-                        />
-                      </Link>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Activity feed */}
-            <Card>
-              <div className="mb-3 flex items-center justify-between">
-                <p className="flex items-center gap-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  <Radio className="h-3.5 w-3.5 text-neutral-500" aria-hidden="true" />
-                  Aktivitas Terbaru
-                </p>
-                <Link
-                  href="/chat"
-                  className={cn("rounded text-xs text-blue-600 hover:text-blue-500 dark:text-blue-400", focusRing)}
-                >
-                  Lihat semua &rarr;
-                </Link>
-              </div>
-              <MiniSlackChannelView variant="preview" limit={6} />
+            <Card className="mt-4">
+              <p className="mb-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">💡 Rekomendasi Smesh</p>
+              <ul className="space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
+                {topAlert && (
+                  <li className="flex gap-2">
+                    <ShoppingBag className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                    Prioritaskan restock <strong>{topAlert.productName}</strong> — stok {topAlert.currentStock}, sudah{" "}
+                    {topAlert.urgency === "critical" ? "kritis" : "mendekati minimum"}.
+                  </li>
+                )}
+                {topSeller && (
+                  <li className="flex gap-2">
+                    <Trophy className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                    <strong>{topSeller.productName}</strong> jadi produk terlaris minggu ini ({topSeller.unitsSold} unit) — jaga
+                    ketersediaan stoknya.
+                  </li>
+                )}
+                {!topAlert && !topSeller && <li>Belum ada rekomendasi — data bisnis belum cukup.</li>}
+              </ul>
             </Card>
           </div>
+
+          <Card>
+            <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              <Trophy className="h-4 w-4 text-amber-500" /> Produk Terlaris
+            </p>
+            <div className="space-y-3">
+              {bestSellers.map((b, i) => (
+                <div key={b.productId} className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
+                    <span className="text-xs font-semibold text-neutral-400">#{i + 1}</span>
+                    {b.productName}
+                  </span>
+                  <span className="font-medium text-neutral-900 dark:text-white">{b.unitsSold} unit</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 border-t border-neutral-200 pt-4 dark:border-neutral-800">
+              <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                <AlertTriangle className="h-4 w-4 text-amber-500" /> Perlu Perhatian
+              </p>
+              {alerts.length === 0 ? (
+                <p className="text-sm text-neutral-500">Semua stok aman.</p>
+              ) : (
+                <div className="space-y-2">
+                  {alerts.slice(0, 3).map((a) => (
+                    <div key={a.productId} className="flex items-center justify-between text-sm">
+                      <span className="text-neutral-700 dark:text-neutral-300">{a.productName}</span>
+                      <span
+                        className={`text-xs font-medium ${
+                          a.urgency === "critical" ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"
+                        }`}
+                      >
+                        {a.currentStock} unit
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Link
+                href="/inventory"
+                className="mt-3 flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-500 dark:text-emerald-400"
+              >
+                Lihat semua <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </Card>
         </div>
-    </>
+      </div>
+    </main>
   );
 }
+

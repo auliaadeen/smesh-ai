@@ -10,17 +10,17 @@ import { AppShell } from "@/components/AppShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "HTI Digital Operations — PoC Demo",
-  description: "Demo internal ITS untuk assessment/PoC HTI",
+  title: "Smesh AI — Multi-Agent Workforce for Indonesian UMKM",
+  description: "AI business workforce untuk pemilik UMKM Indonesia — pahami bisnismu, putuskan langkah berikutnya.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "HTI PoC",
+    title: "Smesh AI",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#b91c1c",
+  themeColor: "#059669",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
