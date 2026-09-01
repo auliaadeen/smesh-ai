@@ -1,80 +1,167 @@
-# HTI PoC Demo — ITS
+# Smesh AI
 
-Demo dua workstream prioritas (P2 Document AI, P3 Warehouse Visibility) untuk
-dibawa ke sesi Assessment/PoC dengan Pak Zamalludin (IT Manager HTI).
+**Multi-Agent Workforce for Indonesian UMKM** — built for DevHandal 2026
+Batch 2 (Tencent EdgeOne Makers track).
 
-**Status:** sudah dibangun & diuji penuh (build sukses, semua halaman & API
-route dites langsung, tidak ada error). Tinggal dipindah ke VPS kamu untuk
-jalan persisten.
+> Don't just ask AI. Let AI understand your business and help you run it.
 
-## Isi Paket
+## What is Smesh?
 
+Most UMKM (small/medium business) owners in Indonesia already have sales and
+inventory data somewhere — the problem isn't a lack of data, it's that
+turning that data into a decision still depends entirely on the owner
+manually checking dashboards, comparing numbers, and figuring out what to
+do next.
+
+Smesh AI is not a generic chatbot bolted onto a dashboard. It's a small
+**AI workforce**: a Business Partner that delegates to specialized agents
+(Sales, Inventory, Product), each of which calls deterministic business
+tools grounded in real business data, then synthesizes one coherent,
+actionable answer — in Bahasa Indonesia, by default.
+
+```text
+Owner asks: "Apa yang harus saya lakukan hari ini?"
+      ↓
+Smesh checks sales, inventory, and product performance
+      ↓
+Smesh explains what's happening, why, and what to do about it
 ```
-hti-demo/
-├── app/                    ← project Next.js (demo utama)
-│   ├── src/app/
-│   │   ├── page.tsx              (landing, link ke 2 demo)
-│   │   ├── document-ai/page.tsx  (demo P2 — upload → ekstraksi PDF)
-│   │   ├── dashboard/page.tsx    (demo P3 — stok 3 gudang)
-│   │   └── api/extract/route.ts  (backend: panggil LlamaParse atau mock)
-│   ├── .env.local.example
-│   └── package.json
-├── ocr-scripts/             ← script Python berdiri sendiri untuk uji OCR
-│   ├── test_llamaparse.py
-│   ├── test_mindee.py
-│   └── requirements.txt
-└── install-vps.sh           ← script instalasi, tinggal jalankan di VPS
+
+## Architecture
+
+```text
+                    UMKM OWNER
+                        │
+                        ↓
+                 Smesh AI Interface  (Next.js App Router)
+                        │
+                        ↓
+            Business Partner / Orchestrator   (agents/business-partner.ts)
+                        │
+        classifies intent → scopes tools to the relevant agent(s)
+                        │
+        ┌───────────────┼───────────────┐
+        ↓               ↓               ↓
+   Sales Agent    Inventory Agent   Product Agent
+        │               │               │
+        └───────────────┼───────────────┘
+                        ↓
+                Business Tools          (tools/index.ts — OpenAI function-calling)
+                        │
+                        ↓
+              BusinessRepository        (interface, swappable)
+                        │
+                        ↓
+           MockBusinessRepository       (deterministic demo data)
+                        │
+                        ↓
+        data/{products,sales,inventory}.ts  — "Toko Sejahtera", Aug 2026
 ```
 
-## Cara Pakai — Cepat (Lokal, buat lihat dulu)
+AI providers sit behind a thin abstraction (`lib/ai/`):
+
+```text
+AIProvider (interface)
+  ├── OpenAIProvider   — primary, implemented
+  └── GeminiProvider   — reserved stub, not implemented yet
+```
+
+`AI_PROVIDER=openai` (default) or `gemini`. Selecting `gemini` today fails
+with a clear error rather than silently falling back — no unpredictable
+provider switching.
+
+**Supabase is not integrated.** The repository layer exists specifically so
+a future `SupabaseBusinessRepository` can replace `MockBusinessRepository`
+without touching agents, tools, or UI — but that swap hasn't happened. All
+business data in this submission is deterministic, seeded demo data.
+
+## Tech stack
+
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 ·
+Framer Motion · Recharts · Lucide icons · OpenAI SDK (tool-calling) ·
+Vitest
+
+## How the AI agents work
+
+`agents/orchestrator.ts` does deterministic keyword routing (Bahasa
+Indonesia) to classify which agent(s) a question needs — sales question →
+Sales Agent only; inventory question → Inventory Agent only; broad
+questions ("apa yang harus saya lakukan hari ini?") → all three. The
+Business Partner (`agents/business-partner.ts`) then makes **one** OpenAI
+tool-calling call scoped to just that agent's tools, executes whatever
+tools the model calls against `MockBusinessRepository`, and returns a
+grounded answer plus `agentsUsed` (shown in the UI as "Berdasarkan: ✓ Sales
+Agent") so the owner can see which part of the business Smesh actually
+checked — without exposing the system prompt, raw tool JSON, or model
+reasoning.
+
+The model never computes business numbers itself — growth, sales velocity,
+reorder quantities, and rankings are all deterministic TypeScript in
+`lib/analytics.ts` and `lib/recommendations.ts`. If a question asks for
+data no tool provides (e.g. last year's revenue), the system prompt
+requires the model to say so rather than fabricate a number.
+
+## How EdgeOne is used
+
+Deployment target is Tencent EdgeOne Pages/Makers, in its default **SSR**
+mode (not static export) — the app uses server components and a Route
+Handler (`/api/agent`), both natively supported. Full details, the exact
+environment variables, build command, and known EdgeOne-specific
+limitations are in [`app/EDGEONE_DEPLOYMENT_NOTES.md`](app/EDGEONE_DEPLOYMENT_NOTES.md).
+
+## Running locally
 
 ```bash
 cd app
 npm install
-npm run build
-npm run start -- -p 3005
-# buka http://localhost:3005
+cp .env.local.example .env.local   # fill in OPENAI_API_KEY
+npm run dev
+# open http://localhost:3000
 ```
 
-Demo jalan **tanpa API key apapun** — otomatis pakai data contoh (mock) yang
-sudah realistis (invoice HTI-Thailand, 3 gudang, dll). Cocok untuk latihan
-sebelum hari-H.
+The dashboard (`/`, `/sales`, `/inventory`, `/products`) works with **zero**
+API keys — it reads straight from the deterministic repository. Only
+`/assistant` (Smesh Business Partner) needs `OPENAI_API_KEY`; without it,
+it degrades gracefully to a friendly error message instead of crashing.
 
-## Cara Pakai — di VPS Kamu (buat demo beneran)
+### Environment variables
 
-1. Jalankan `install-vps.sh` di sesi MobaXterm SSH kamu (lihat isi file
-   untuk detail tiap langkah — sudah saya beri komentar).
-2. Upload folder `app/` ke VPS (SFTP MobaXterm, atau lewat git).
-3. `npm install && npm run build && npm run start -- -p 3000`
-4. Jaga tetap jalan pakai `pm2` atau Docker (kamu sudah pakai Docker untuk
-   Odoo, tinggal bikin container serupa).
+| Variable | Required | Purpose |
+|---|---|---|
+| `OPENAI_API_KEY` | For AI chat | Business Partner tool-calling |
+| `OPENAI_MODEL` | No | Defaults to `gpt-4o-mini` |
+| `AI_PROVIDER` | No | `openai` (default) or `gemini` (not implemented yet) |
+| `GEMINI_API_KEY` | No | Reserved for `GeminiProvider` |
 
-## Nyalakan OCR Sungguhan (opsional, kapan saja siap)
+Never `NEXT_PUBLIC_*` — every AI call happens server-side in a Route
+Handler; the key is never sent to the browser.
 
-Demo defaultnya pakai data mock supaya bisa langsung didemokan. Begitu kamu
-punya API key dan contoh dokumen asli HTI:
+## Testing
 
-1. `cp app/.env.local.example app/.env.local`
-2. Isi `LLAMA_CLOUD_API_KEY` (daftar gratis di cloud.llamaindex.ai)
-3. Restart server — halaman Document AI otomatis mulai memanggil LlamaParse
-   sungguhan, bukan mock lagi.
-4. Sebelum itu, tes dulu lewat command line:
-   ```bash
-   cd ocr-scripts
-   pip install -r requirements.txt
-   export LLAMA_CLOUD_API_KEY="..."
-   python3 test_llamaparse.py /path/to/invoice-hti.pdf
-   ```
-   Ini membantu kamu lihat kualitas hasilnya dulu sebelum didemokan live.
+```bash
+cd app
+npm run lint
+npm run build
+npx vitest run
+```
 
-## Catatan Teknis
+31 unit tests cover deterministic analytics (growth, sales velocity, low
+stock, reorder quantity, ranking, div-by-zero safety), the repository
+(deterministic data, alert filtering, best-seller ordering), the tool
+executor (structured output, invalid-input handling), the recommendation
+priority engine, and agent routing (sales/inventory/product/multi-domain
+classification).
 
-- **ui-ux-pro-max-skill** sudah terinstal di `app/.claude/skills/` — begitu
-  kamu buka folder ini dengan Claude Code, skill-nya otomatis aktif untuk
-  bantu desain komponen baru.
-- **shadcn/ui & Tremor CLI** sengaja tidak dijalankan otomatis di sini (butuh
-  koneksi ke registry publik yang diblokir di sandbox saya) — komponen yang
-  ada saya tulis manual dengan gaya visual yang sama. Kalau nanti butuh
-  komponen tambahan, command-nya sudah saya siapkan di `install-vps.sh`.
-- Semua warna/style mengikuti brand ITS (dark theme, merah `#C00000`) supaya
-  konsisten dengan deck presentasi yang sudah dibuat sebelumnya.
+## Deployment
+
+See [`app/EDGEONE_DEPLOYMENT_NOTES.md`](app/EDGEONE_DEPLOYMENT_NOTES.md) for
+the verified EdgeOne Pages/Makers deployment model, build configuration,
+required environment variables, runtime notes, and known limitations.
+
+## Project history
+
+This repository was migrated from an earlier internal PoC (`hti-poc-demo`)
+whose reusable Next.js shell, layout, and UI primitives were kept and
+rebranded; its business-specific modules (payroll, document OCR, email
+setup) are unlinked from navigation but not deleted, in case they're useful
+scaffolding for a later batch.

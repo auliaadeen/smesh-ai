@@ -1,47 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Sparkles, Send, Loader2, Bot, User } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Sparkles, Send, Loader2, Bot, User, ShieldCheck } from "lucide-react";
 
 const CONTOH_PERTANYAAN = [
-  "Gimana status penjualan hari ini?",
-  "Produk apa yang harus saya beli?",
-  "Kenapa penjualan saya turun?",
-  "Apa yang harus saya lakukan hari ini?",
+  "📊 Cek penjualan hari ini",
+  "📦 Apa yang harus direstock?",
+  "📈 Produk mana yang sedang naik?",
+  "💡 Apa yang harus saya lakukan hari ini?",
 ];
 
-const TRACE_LABEL: Record<string, string> = {
-  get_today_sales: "Menganalisis penjualan hari ini",
-  get_sales_comparison: "Membandingkan periode penjualan",
-  get_best_sellers: "Mengecek produk terlaris",
-  get_inventory_alerts: "Mengecek inventory",
-  get_product_performance: "Membandingkan performa produk",
-};
-
-type ChatMsg = { role: "user" | "assistant"; content: string; trace?: string[]; isError?: boolean };
+type ChatMsg = { role: "user" | "assistant"; content: string; agentsUsed?: string[]; isError?: boolean };
 
 export default function AssistantPage() {
   const [chat, setChat] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   async function kirim(pertanyaan: string) {
-    if (!pertanyaan.trim() || loading) return;
+    const cleaned = pertanyaan.replace(/^[^\w]+/, "").trim();
+    if (!cleaned || loading) return;
     const history = chat.map((m) => ({ role: m.role, content: m.content }));
-    setChat((prev) => [...prev, { role: "user", content: pertanyaan }]);
+    setChat((prev) => [...prev, { role: "user", content: cleaned }]);
     setInput("");
     setLoading(true);
     try {
       const res = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: pertanyaan, history }),
+        body: JSON.stringify({ message: cleaned, history }),
       });
       const json = await res.json();
       setChat((prev) => [
         ...prev,
-        { role: "assistant", content: json.answer ?? "Maaf, gagal dapat jawaban.", trace: json.trace },
+        { role: "assistant", content: json.answer ?? "Maaf, gagal dapat jawaban.", agentsUsed: json.agentsUsed },
       ]);
     } catch {
       setChat((prev) => [
@@ -82,7 +76,7 @@ export default function AssistantPage() {
           {chat.map((m, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 6 }}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               className={`flex gap-2.5 ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
@@ -101,9 +95,10 @@ export default function AssistantPage() {
                 }`}
               >
                 {m.content}
-                {m.trace && m.trace.length > 0 && (
-                  <p className="mt-2 border-t border-black/10 pt-2 text-[11px] text-neutral-500 dark:border-white/10">
-                    {[...new Set(m.trace)].map((t) => `✓ ${TRACE_LABEL[t] ?? t}`).join("  ·  ")}
+                {m.agentsUsed && m.agentsUsed.length > 0 && (
+                  <p className="mt-2 flex items-center gap-1 border-t border-black/10 pt-2 text-[11px] text-neutral-500 dark:border-white/10">
+                    <ShieldCheck className="h-3 w-3 shrink-0" />
+                    Berdasarkan: {m.agentsUsed.map((a) => `✓ ${a}`).join("  ·  ")}
                   </p>
                 )}
               </div>
