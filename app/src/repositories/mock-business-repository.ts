@@ -62,7 +62,7 @@ export class MockBusinessRepository implements BusinessRepository {
     };
   }
 
-  async getTodayProductSales(limit = 10): Promise<TodayProductSales[]> {
+  async getTodayProductSales(limit = 50): Promise<TodayProductSales[]> {
     const grouped = new Map<string, TodayProductSales>();
 
     for (const sale of salesOn(TODAY)) {
