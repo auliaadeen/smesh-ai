@@ -2,6 +2,7 @@ import type {
   Product,
   Sale,
   TodaySales,
+  TodayProductSales,
   SalesComparison,
   BestSeller,
   InventoryAlert,
@@ -59,6 +60,29 @@ export class MockBusinessRepository implements BusinessRepository {
       orders: countOrders(todaySales),
       unitsSold: sumUnits(todaySales),
     };
+  }
+
+  async getTodayProductSales(limit = 10): Promise<TodayProductSales[]> {
+    const grouped = new Map<string, TodayProductSales>();
+
+    for (const sale of salesOn(TODAY)) {
+      const existing = grouped.get(sale.productId);
+      if (existing) {
+        existing.unitsSold += sale.quantity;
+        existing.revenue += sale.revenue;
+      } else {
+        grouped.set(sale.productId, {
+          productId: sale.productId,
+          productName: productName.get(sale.productId) ?? sale.productId,
+          unitsSold: sale.quantity,
+          revenue: sale.revenue,
+        });
+      }
+    }
+
+    return [...grouped.values()]
+      .sort((a, b) => b.unitsSold - a.unitsSold || b.revenue - a.revenue)
+      .slice(0, Math.max(0, limit));
   }
 
   async getSalesComparison(): Promise<SalesComparison> {
