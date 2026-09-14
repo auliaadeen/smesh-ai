@@ -22,6 +22,7 @@ import {
 } from "@/lib/analytics";
 
 const TRAILING_WINDOW_DAYS = 7;
+const DEMO_TODAY = "2026-08-31";
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
@@ -42,10 +43,11 @@ function shiftDate(dateStr: string, deltaDays: number): string {
 }
 
 function todayDate(): string {
-  // Demo dataset is a fixed Aug 2026 window (mirrors MockBusinessRepository's
-  // hardcoded TODAY) — SMESH_DEMO_DATE pins "today" to that window instead of
-  // the real wall clock, which would otherwise fall outside seeded data.
-  return process.env.SMESH_DEMO_DATE || formatDate(new Date());
+  // Supabase demo data is fixed to August 2026, with the canonical demo date
+  // matching MockBusinessRepository/TODAY. Keep the fixed date as the safe
+  // production fallback so a missing EdgeOne environment variable cannot make
+  // the AI query a future real-world date and return an empty dataset.
+  return process.env.SMESH_DEMO_DATE || DEMO_TODAY;
 }
 
 function checkError(
