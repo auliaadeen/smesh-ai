@@ -31,6 +31,13 @@ export type TodaySales = {
   unitsSold: number;
 };
 
+export type TodayProductSales = {
+  productId: string;
+  productName: string;
+  unitsSold: number;
+  revenue: number;
+};
+
 export type SalesComparison = {
   currentRevenue: number;
   previousRevenue: number;
