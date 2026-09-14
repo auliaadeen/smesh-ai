@@ -1,6 +1,7 @@
 import type {
   Product,
   TodaySales,
+  TodayProductSales,
   SalesComparison,
   BestSeller,
   InventoryAlert,
@@ -12,6 +13,7 @@ import type {
 // touching agents, tools, or the API route.
 export interface BusinessRepository {
   getTodaySales(): Promise<TodaySales>;
+  getTodayProductSales(limit?: number): Promise<TodayProductSales[]>;
   getSalesComparison(): Promise<SalesComparison>;
   getBestSellers(limit?: number): Promise<BestSeller[]>;
   getInventoryAlerts(): Promise<InventoryAlert[]>;
