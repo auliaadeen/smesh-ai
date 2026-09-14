@@ -7,6 +7,7 @@ import type { BusinessRepository } from "@/repositories/business-repository";
 
 export const TOOL_NAMES = [
   "get_today_sales",
+  "get_today_product_sales",
   "get_sales_comparison",
   "get_best_sellers",
   "get_inventory_alerts",
@@ -20,15 +21,29 @@ export const toolDefinitions: OpenAI.Chat.Completions.ChatCompletionTool[] = [
     type: "function",
     function: {
       name: "get_today_sales",
-      description: "Ambil data penjualan hari ini: omzet, jumlah transaksi, unit terjual.",
+      description: "Ambil data penjualan HARI INI saja: omzet, jumlah transaksi, dan unit terjual. Gunakan untuk pertanyaan yang menyebut hari ini.",
       parameters: { type: "object", properties: {}, additionalProperties: false },
     },
   },
   {
     type: "function",
     function: {
+      name: "get_today_product_sales",
+      description: "Ambil rincian produk yang TERJUAL HARI INI saja, dikelompokkan per produk dan diurutkan dari unit terbanyak. Jumlah unit dan omzet dari tool ini harus konsisten dengan get_today_sales. Gunakan untuk pertanyaan seperti '75 unit hari ini dari produk apa saja' atau 'produk terlaris hari ini'.",
+      parameters: {
+        type: "object",
+        properties: {
+          limit: { type: "number", description: "Jumlah produk teratas, default 10" },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_sales_comparison",
-      description: "Bandingkan omzet hari ini dengan periode pembanding, hasilkan persentase pertumbuhan.",
+      description: "Bandingkan omzet hari ini dengan hari yang sama minggu lalu, hasilkan persentase pertumbuhan.",
       parameters: { type: "object", properties: {}, additionalProperties: false },
     },
   },
@@ -36,7 +51,7 @@ export const toolDefinitions: OpenAI.Chat.Completions.ChatCompletionTool[] = [
     type: "function",
     function: {
       name: "get_best_sellers",
-      description: "Ambil daftar produk paling laku (unit terjual) dalam 7 hari terakhir.",
+      description: "Ambil daftar produk paling laku berdasarkan AKUMULASI 7 HARI TERAKHIR. Jangan gunakan tool ini untuk menjawab 'hari ini' atau menghitung unit penjualan hari ini.",
       parameters: {
         type: "object",
         properties: {
@@ -98,6 +113,10 @@ export async function executeTool(
   switch (name) {
     case "get_today_sales":
       return repository.getTodaySales();
+    case "get_today_product_sales": {
+      const limit = typeof args.limit === "number" ? args.limit : undefined;
+      return repository.getTodayProductSales(limit);
+    }
     case "get_sales_comparison":
       return repository.getSalesComparison();
     case "get_best_sellers": {
