@@ -61,12 +61,10 @@ function checkError(
 export class SupabaseBusinessRepository implements BusinessRepository {
   async getTodaySales(): Promise<TodaySales> {
     const today = todayDate();
-
     const { data, error } = await getSupabaseServerClient()
       .from("sales")
       .select("id, product_id, quantity, revenue, sold_at")
       .eq("sold_at", today);
-
     checkError(error, "getTodaySales");
 
     const sales = (data ?? []).map((sale) => ({
@@ -85,26 +83,21 @@ export class SupabaseBusinessRepository implements BusinessRepository {
     };
   }
 
-  async getTodayProductSales(limit = 10): Promise<TodayProductSales[]> {
+  async getTodayProductSales(limit = 50): Promise<TodayProductSales[]> {
     const today = todayDate();
-
     const { data: salesData, error: salesError } = await getSupabaseServerClient()
       .from("sales")
       .select("product_id, quantity, revenue, sold_at")
       .eq("sold_at", today);
-
     checkError(salesError, "getTodayProductSales.sales");
 
     const { data: productData, error: productError } = await getSupabaseServerClient()
       .from("products")
       .select("id, name")
       .eq("active", true);
-
     checkError(productError, "getTodayProductSales.products");
 
-    const names = new Map(
-      (productData ?? []).map((product) => [product.id, product.name])
-    );
+    const names = new Map((productData ?? []).map((product) => [product.id, product.name]));
     const grouped = new Map<string, TodayProductSales>();
 
     for (const sale of salesData ?? []) {
@@ -130,12 +123,10 @@ export class SupabaseBusinessRepository implements BusinessRepository {
   async getSalesComparison(): Promise<SalesComparison> {
     const today = todayDate();
     const comparisonDate = shiftDate(today, -7);
-
     const { data, error } = await getSupabaseServerClient()
       .from("sales")
       .select("id, product_id, quantity, revenue, sold_at")
       .in("sold_at", [today, comparisonDate]);
-
     checkError(error, "getSalesComparison");
 
     const sales = (data ?? []).map((sale) => ({
@@ -145,7 +136,6 @@ export class SupabaseBusinessRepository implements BusinessRepository {
       revenue: Number(sale.revenue),
       soldAt: sale.sold_at,
     }));
-
     const currentSales = sales.filter((sale) => sale.soldAt === today);
     const previousSales = sales.filter((sale) => sale.soldAt === comparisonDate);
     const currentRevenue = sumRevenue(currentSales);
@@ -162,20 +152,17 @@ export class SupabaseBusinessRepository implements BusinessRepository {
   async getBestSellers(limit = 5): Promise<BestSeller[]> {
     const today = todayDate();
     const start = shiftDate(today, -(TRAILING_WINDOW_DAYS - 1));
-
     const { data: salesData, error: salesError } = await getSupabaseServerClient()
       .from("sales")
       .select("id, product_id, quantity, revenue, sold_at")
       .gte("sold_at", start)
       .lte("sold_at", today);
-
     checkError(salesError, "getBestSellers.sales");
 
     const { data: productData, error: productError } = await getSupabaseServerClient()
       .from("products")
       .select("id, name, category, price, cost, active")
       .eq("active", true);
-
     checkError(productError, "getBestSellers.products");
 
     const sales = (salesData ?? []).map((sale) => ({
@@ -185,7 +172,6 @@ export class SupabaseBusinessRepository implements BusinessRepository {
       revenue: Number(sale.revenue),
       soldAt: sale.sold_at,
     }));
-
     const products: Product[] = (productData ?? []).map((product) => ({
       id: product.id,
       name: product.name,
@@ -201,7 +187,6 @@ export class SupabaseBusinessRepository implements BusinessRepository {
   async getInventoryAlerts(): Promise<InventoryAlert[]> {
     const today = todayDate();
     const start = shiftDate(today, -(TRAILING_WINDOW_DAYS - 1));
-
     const { data: inventoryData, error: inventoryError } = await getSupabaseServerClient()
       .from("inventory")
       .select("product_id, stock, minimum_stock, target_stock");
