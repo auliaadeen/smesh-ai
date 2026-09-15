@@ -76,9 +76,11 @@ begin
     v_new_stock := v_stock + p_quantity;
   end if;
 
-  insert into public.sales (product_id, quantity, revenue, sold_at)
-  values (p_product_id, p_quantity, p_revenue, p_transaction_date)
-  returning id into v_sale_id;
+  if p_transaction_type = 'sale' then
+    insert into public.sales (product_id, quantity, revenue, sold_at)
+    values (p_product_id, p_quantity, p_revenue, p_transaction_date)
+    returning id into v_sale_id;
+  end if;
 
   update public.inventory
   set stock = v_new_stock, updated_at = now()
