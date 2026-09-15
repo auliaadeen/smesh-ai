@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
           }],
         });
         const raw = completion.choices[0]?.message?.content ?? "";
-        const match = raw.match(/\{[\\s\\S]*\}/);
+        const match = raw.match(/\{[\s\S]*\}/);
         if (match) {
           const parsed = JSON.parse(match[0]) as ExtractedFields;
           if (Array.isArray(parsed.fields) && Array.isArray(parsed.lineItems)) {
