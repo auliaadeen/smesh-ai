@@ -1,23 +1,17 @@
 export const mockExtraction = {
-  documentType: "Commercial Invoice",
-  confidence: 0.96,
+  documentType: "Sales Receipt",
+  confidence: 0.97,
   fields: [
-    { label: "Invoice No.", value: "INV-2026-08-0417" },
-    { label: "Invoice Date", value: "05 Agustus 2026" },
-    { label: "Supplier", value: "Honda Trading Corporation (Thailand)" },
-    { label: "Buyer", value: "PT Honda Trading Indonesia" },
-    { label: "PO Reference", value: "PO-HTI-88213" },
-    { label: "Currency", value: "USD" },
-    { label: "Total Amount", value: "USD 48,920.00" },
-    { label: "Incoterm", value: "FOB Laem Chabang" },
-    { label: "HS Code", value: "8708.99" },
-    { label: "Port of Discharge", value: "Tanjung Priok" },
+    { label: "Document No.", value: "SALE-2026-08-31-001" },
+    { label: "Transaction Date", value: "31 Agustus 2026" },
+    { label: "Customer", value: "Pelanggan Toko Sejahtera" },
+    { label: "Currency", value: "IDR" },
+    { label: "Total Amount", value: "Rp135.000" },
   ],
   lineItems: [
-    { sku: "HTI-BRG-2201", desc: "Brake Caliper Assembly", qty: 480, unit: "USD 42.50", total: "USD 20,400.00" },
-    { sku: "HTI-FLT-1187", desc: "Oil Filter Cartridge", qty: 2200, unit: "USD 3.10", total: "USD 6,820.00" },
-    { sku: "HTI-SHK-0552", desc: "Shock Absorber Rear", qty: 350, unit: "USD 59.20", total: "USD 20,720.00" },
-    { sku: "HTI-CBL-0093", desc: "Throttle Cable Set", qty: 980, unit: "USD 0.98", total: "USD 960.00" },
+    { sku: "kopi-arabica", desc: "Kopi Arabica 250g", qty: 2, unit: "Rp45.000", total: "Rp90.000" },
+    { sku: "gula-aren", desc: "Gula Aren 500g", qty: 1, unit: "Rp28.000", total: "Rp28.000" },
+    { sku: "teh-hijau", desc: "Teh Hijau 100g", qty: 1, unit: "Rp25.000", total: "Rp25.000" },
   ],
 };
 
