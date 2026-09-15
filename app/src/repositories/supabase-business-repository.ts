@@ -6,6 +6,7 @@ import type {
   BestSeller,
   InventoryAlert,
   ProductPerformance,
+  Inventory,
 } from "@/types/business";
 import type { BusinessRepository } from "@/repositories/business-repository";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -184,6 +185,20 @@ export class SupabaseBusinessRepository implements BusinessRepository {
     return rankBestSellers(sales, products, limit);
   }
 
+  async getInventorySnapshot(): Promise<Inventory[]> {
+    const { data, error } = await getSupabaseServerClient()
+      .from("inventory")
+      .select("product_id, stock, minimum_stock, target_stock")
+      .order("product_id");
+    checkError(error, "getInventorySnapshot");
+    return (data ?? []).map((item) => ({
+      productId: item.product_id,
+      stock: Number(item.stock),
+      minimumStock: Number(item.minimum_stock),
+      targetStock: Number(item.target_stock),
+    }));
+  }
+
   async getInventoryAlerts(): Promise<InventoryAlert[]> {
     const today = todayDate();
     const start = shiftDate(today, -(TRAILING_WINDOW_DAYS - 1));
@@ -299,6 +314,25 @@ export class SupabaseBusinessRepository implements BusinessRepository {
     const performance = buildProductPerformance(currentSales, previousSales, products);
 
     return productId ? performance.filter((item) => item.productId === productId) : performance;
+  }
+
+  async getDailyRevenueSeries(days = 14): Promise<{ date: string; revenue: number }[]> {
+    const today = todayDate();
+    const start = shiftDate(today, -(days - 1));
+    const { data, error } = await getSupabaseServerClient()
+      .from("sales")
+      .select("revenue, sold_at")
+      .gte("sold_at", start)
+      .lte("sold_at", today);
+    checkError(error, "getDailyRevenueSeries");
+    const byDate = new Map<string, number>();
+    for (const row of data ?? []) {
+      byDate.set(row.sold_at, (byDate.get(row.sold_at) ?? 0) + Number(row.revenue));
+    }
+    return Array.from({ length: days }, (_, index) => {
+      const date = shiftDate(today, -(days - 1 - index));
+      return { date, revenue: byDate.get(date) ?? 0 };
+    });
   }
 }
 
