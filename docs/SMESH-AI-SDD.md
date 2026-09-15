@@ -61,7 +61,7 @@ Existing Supabase tables:
 
 Extra columns are harmless because repositories select explicit columns.
 
-Canonical demo date: SMESH_DEMO_DATE, fallback 2026-08-31.
+Business date: SMESH_DEMO_DATE when explicitly configured; otherwise Supabase uses the latest sales date. This keeps the baseline at 2026-08-31 until a confirmed new sale is uploaded, then moves the demo business date to the newest uploaded transaction date.
 
 ## 7. Repository contract
 
@@ -84,7 +84,7 @@ UPLOAD → EXTRACT → REVIEW / EDIT → CONFIRM → DATABASE MUTATION → ANALY
 
 Demo transaction types:
 - sale: inserts sales and decrements inventory
-- purchase: increases inventory
+- purchase: increases inventory without creating a sales-ledger row
 
 Confirmation is mandatory. AI never silently mutates business state.
 
@@ -174,3 +174,22 @@ No Laravel, CRM, payment/billing, WhatsApp, unrestricted database writes, fake r
 ## 17. Demo story
 
 Overview → ask AI for today's sales → inspect Inventory → upload receipt in Document AI → review/edit → confirm → database changes → reopen Sales/Inventory → ask AI again and receive updated grounded numbers.
+
+
+## 18. Current implementation status
+
+Implemented on main:
+- SDD updated
+- active Sales, Inventory, Products and Overview pages use the repository provider
+- Warehouse module added using live inventory/products
+- Mini Slack and Business Email exposed in navigation
+- Document AI supports OpenAI Vision when an image and OpenAI key are available, with deterministic Smesh fallback
+- Document AI supports editable review and explicit confirmation
+- controlled Supabase transaction RPC added to grants.sql
+- confirmed sales update the sales ledger and inventory; purchases update inventory only
+
+Required manual database step:
+Run app/supabase/grants.sql in the Supabase SQL Editor again because it now creates/updates the transaction RPC.
+
+Required deployment configuration:
+Keep SMESH_DEMO_DATE unset for the dynamic demo-date behavior, or set it deliberately when a frozen demo date is required.
