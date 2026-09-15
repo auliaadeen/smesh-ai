@@ -3,7 +3,7 @@ import { Sparkles, Trophy, AlertTriangle, ArrowRight, TrendingUp, Package, Layou
 import { Card } from "@/components/ui/Card";
 import { BusinessHealthSummary } from "@/components/dashboard/BusinessHealthSummary";
 import { RevenueTrendChart } from "@/components/dashboard/RevenueTrendChart";
-import { mockBusinessRepository } from "@/repositories/mock-business-repository";
+import { getBusinessRepository } from "@/repositories";
 import { buildRecommendations } from "@/lib/recommendations";
 
 const modules = [
@@ -21,12 +21,13 @@ const PRIORITY_TONE = {
 const PRIORITY_LABEL = { CRITICAL: "🔴", WARNING: "🟠", NORMAL: "ℹ️" } as const;
 
 export default async function CommandCenter() {
+  const repository = getBusinessRepository();
   const [today, comparison, bestSellers, alerts, series] = await Promise.all([
-    mockBusinessRepository.getTodaySales(),
-    mockBusinessRepository.getSalesComparison(),
-    mockBusinessRepository.getBestSellers(5),
-    mockBusinessRepository.getInventoryAlerts(),
-    mockBusinessRepository.getDailyRevenueSeries(14),
+    repository.getTodaySales(),
+    repository.getSalesComparison(),
+    repository.getBestSellers(5),
+    repository.getInventoryAlerts(),
+    repository.getDailyRevenueSeries(14),
   ]);
 
   // "Best seller" as an importance signal for prioritization means the top
