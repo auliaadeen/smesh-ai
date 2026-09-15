@@ -6,17 +6,17 @@ import type {
   BestSeller,
   InventoryAlert,
   ProductPerformance,
+  Inventory,
 } from "@/types/business";
 
-// Agent/tool layer depends on this interface only — never on raw mock
-// arrays — so a future SupabaseBusinessRepository can swap in without
-// touching agents, tools, or the API route.
 export interface BusinessRepository {
   getTodaySales(): Promise<TodaySales>;
   getTodayProductSales(limit?: number): Promise<TodayProductSales[]>;
   getSalesComparison(): Promise<SalesComparison>;
   getBestSellers(limit?: number): Promise<BestSeller[]>;
   getInventoryAlerts(): Promise<InventoryAlert[]>;
+  getInventorySnapshot(): Promise<Inventory[]>;
   getProducts(): Promise<Product[]>;
   getProductPerformance(productId?: string): Promise<ProductPerformance[]>;
+  getDailyRevenueSeries(days?: number): Promise<{ date: string; revenue: number }[]>;
 }
