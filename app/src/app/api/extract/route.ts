@@ -81,7 +81,41 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.LLAMA_CLOUD_API_KEY;
 
   if (!apiKey) {
-    await new Promise((r) => setTimeout(r, 1200));
+    const formData = await req.formData().catch(() => null);
+    const file = formData?.get("file") as File | null;
+    const openaiKey = process.env.OPENAI_API_KEY;
+
+    if (openaiKey && file && file.type.startsWith("image/")) {
+      try {
+        const bytes = Buffer.from(await file.arrayBuffer());
+        const dataUrl = `data:${file.type};base64,${bytes.toString("base64")}`;
+        const client = new OpenAI({ apiKey: openaiKey });
+        const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+        const completion = await client.chat.completions.create({
+          model,
+          temperature: 0,
+          messages: [{
+            role: "user",
+            content: [
+              { type: "text", text: `Ekstrak struk/invoice UMKM ini. Jangan mengarang. Gunakan SKU berikut bila produk cocok: kopi-arabica, kopi-robusta, gula-aren, susu-oat, choco-powder, teh-hijau, madu-hutan. Balas JSON saja: {"fields":[{"label":string,"value":string}],"lineItems":[{"sku":string,"desc":string,"qty":number,"unit":string,"total":string}]}. Jika SKU tidak dapat dipastikan, gunakan nama produk sebagai sku dan jangan memasukkan produk yang tidak jelas.` },
+              { type: "image_url", image_url: { url: dataUrl } },
+            ],
+          }],
+        });
+        const raw = completion.choices[0]?.message?.content ?? "";
+        const match = raw.match(/\{[\\s\\S]*\}/);
+        if (match) {
+          const parsed = JSON.parse(match[0]) as ExtractedFields;
+          if (Array.isArray(parsed.fields) && Array.isArray(parsed.lineItems)) {
+            return NextResponse.json({ source: "openai-vision", ...parsed });
+          }
+        }
+      } catch (err) {
+        console.error("OpenAI document extraction failed, falling back to demo extraction:", err);
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 600));
     return NextResponse.json({ source: "mock", ...mockExtraction });
   }
 
