@@ -47,6 +47,22 @@ export function toolsForAgents(agents: AgentKey[]): ToolName[] {
   return [...new Set(agents.flatMap((a) => AGENT_REGISTRY[a].tools))];
 }
 
+// Detects "stok <nama/ID produk>" phrasing so Business Partner can force an
+// exact get_product_status lookup instead of letting the model answer a
+// named-product question from an aggregate tool like get_inventory_alerts
+// (root cause of the SMESH-XYZ substitution bug — Batch 2.1 Q7). Deliberately
+// anchored on the standalone word "stok" (not "restock", which doesn't
+// contain it) so aggregate questions like "produk yang harus di-restock"
+// never trigger single-product mode.
+const PRODUCT_QUERY_PATTERN = /\bstok\b\s+(?:produk\s+)?([a-z0-9][a-z0-9\- ]{1,40}?)\s*\??$/i;
+
+export function extractProductQuery(question: string): string | null {
+  const match = question.trim().match(PRODUCT_QUERY_PATTERN);
+  if (!match) return null;
+  const candidate = match[1].trim();
+  return candidate.length > 0 ? candidate : null;
+}
+
 export function agentNames(agents: AgentKey[]): string[] {
   return agents.map((a) => AGENT_REGISTRY[a].name);
 }

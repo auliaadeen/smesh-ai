@@ -7,6 +7,7 @@ import type {
   InventoryAlert,
   ProductPerformance,
   Inventory,
+  ProductStatus,
 } from "@/types/business";
 import type { BusinessRepository } from "@/repositories/business-repository";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -22,6 +23,7 @@ import {
   rankBestSellers,
   buildProductPerformance,
 } from "@/lib/analytics";
+import { findProduct, buildProductStatus } from "@/lib/productLookup";
 
 const TRAILING_WINDOW_DAYS = 7;
 const DEMO_TODAY = "2026-08-31";
@@ -337,6 +339,14 @@ export class SupabaseBusinessRepository implements BusinessRepository {
       const date = shiftDate(today, -(days - 1 - index));
       return { date, revenue: byDate.get(date) ?? 0 };
     });
+  }
+
+  async getProductStatus(query: string): Promise<ProductStatus | null> {
+    const products = await this.getProducts();
+    const product = findProduct(query, products);
+    if (!product) return null;
+    const inventory = await this.getInventorySnapshot();
+    return buildProductStatus(product, inventory);
   }
 }
 

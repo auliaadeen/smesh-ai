@@ -70,3 +70,18 @@ export type ProductPerformance = {
   growthPercentage: number;
   contributionPercentage: number;
 };
+
+// Exact-identity lookup result for a single named/specific product query
+// (spec Batch 2.1 Q7/Q8 — never substitute a different product when the
+// requested one isn't found).
+export type ProductStatus = {
+  productId: string;
+  productName: string;
+  category: string;
+  price: number;
+  active: boolean;
+  currentStock: number;
+  minimumStock: number;
+  targetStock: number;
+  isLowStock: boolean;
+};

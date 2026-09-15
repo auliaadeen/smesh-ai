@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { classifyAgents, toolsForAgents } from "@/agents/orchestrator";
+import { classifyAgents, toolsForAgents, extractProductQuery } from "@/agents/orchestrator";
 
 describe("classifyAgents", () => {
   it("routes a sales question to the sales agent only", () => {
@@ -43,5 +43,33 @@ describe("toolsForAgents", () => {
     expect(new Set(tools).size).toBe(tools.length);
     expect(tools).toContain("get_today_sales");
     expect(tools).toContain("get_inventory_alerts");
+  });
+
+  it("gives the inventory agent access to the exact product lookup tool", () => {
+    expect(toolsForAgents(["inventory"])).toContain("get_product_status");
+  });
+});
+
+describe("extractProductQuery", () => {
+  // Batch 2.1 TEST A/B — "stok <nama>" must extract the named product so
+  // Business Partner can force an exact lookup instead of an aggregate tool.
+  it("extracts the product name from a specific stock question", () => {
+    expect(extractProductQuery("Bagaimana stok Kopi Arabica?")).toBe("Kopi Arabica");
+  });
+
+  it("extracts a fictional product name the same way", () => {
+    expect(extractProductQuery("Bagaimana stok produk SMESH-XYZ?")).toBe("SMESH-XYZ");
+  });
+
+  it("does not trigger on aggregate restock questions", () => {
+    expect(extractProductQuery("Produk yang harus di-restock?")).toBeNull();
+  });
+
+  it("does not trigger on broad business-condition questions", () => {
+    expect(extractProductQuery("Bagaimana kondisi bisnis dan apa yang harus saya lakukan hari ini?")).toBeNull();
+  });
+
+  it("does not trigger when there is no stock question at all", () => {
+    expect(extractProductQuery("Cek penjualan hari ini")).toBeNull();
   });
 });

@@ -8,6 +8,10 @@ export type ToolCompletionParams = {
   messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
   tools: OpenAI.Chat.Completions.ChatCompletionTool[];
   temperature?: number;
+  /** Forces a specific function to be called this round (e.g. to guarantee
+   * get_product_status actually executes for a named-product question
+   * instead of leaving tool selection to the model). Omit for normal "auto". */
+  toolChoice?: OpenAI.Chat.Completions.ChatCompletionCreateParams["tool_choice"];
 };
 
 export type ToolCompletionResult = {

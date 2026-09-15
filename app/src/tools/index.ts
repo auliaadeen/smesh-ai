@@ -12,6 +12,7 @@ export const TOOL_NAMES = [
   "get_best_sellers",
   "get_inventory_alerts",
   "get_product_performance",
+  "get_product_status",
 ] as const;
 
 export type ToolName = (typeof TOOL_NAMES)[number];
@@ -85,6 +86,22 @@ export const toolDefinitions: OpenAI.Chat.Completions.ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "get_product_status",
+      description:
+        "Cari SATU produk spesifik berdasarkan nama atau ID persis seperti disebut user, lalu kembalikan identitas dan status stoknya. WAJIB dipakai setiap kali user menyebut nama/ID produk tertentu (termasuk yang terdengar tidak dikenal). Jika produk tidak ditemukan, hasil akan berisi found:false — dalam kasus itu JANGAN mengganti dengan produk lain atau tool lain.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Nama atau ID produk persis seperti disebut user" },
+        },
+        required: ["query"],
+        additionalProperties: false,
+      },
+    },
+  },
 ];
 
 function isToolName(name: string): name is ToolName {
@@ -128,6 +145,11 @@ export async function executeTool(
     case "get_product_performance": {
       const productId = typeof args.productId === "string" ? args.productId : undefined;
       return repository.getProductPerformance(productId);
+    }
+    case "get_product_status": {
+      const query = typeof args.query === "string" ? args.query : "";
+      const status = await repository.getProductStatus(query);
+      return status ? { found: true, ...status } : { found: false, query };
     }
   }
 }

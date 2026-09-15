@@ -37,4 +37,32 @@ describe("MockBusinessRepository", () => {
     expect(single).toHaveLength(1);
     expect(single[0].productId).toBe(all[0].productId);
   });
+
+  // Batch 2.1 acceptance TEST A — a specific existing product resolves to
+  // only that product's data.
+  it("getProductStatus resolves an existing product by partial name", async () => {
+    const status = await mockBusinessRepository.getProductStatus("Kopi Arabica");
+    expect(status).not.toBeNull();
+    expect(status?.productId).toBe("kopi-arabica");
+    expect(status?.productName).toBe("Kopi Arabica 250g");
+  });
+
+  it("getProductStatus resolves an existing product by exact id", async () => {
+    const status = await mockBusinessRepository.getProductStatus("kopi-arabica");
+    expect(status?.productId).toBe("kopi-arabica");
+  });
+
+  // Batch 2.1 acceptance TEST B — a fictional/unknown product must return
+  // null, never a substituted real product.
+  it("getProductStatus returns null for a fictional product", async () => {
+    const status = await mockBusinessRepository.getProductStatus("SMESH-XYZ");
+    expect(status).toBeNull();
+  });
+
+  it("getProductStatus returns null for an ambiguous partial match", async () => {
+    // "Kopi" alone matches both Kopi Arabica and Kopi Robusta — must not
+    // silently pick one.
+    const status = await mockBusinessRepository.getProductStatus("Kopi");
+    expect(status).toBeNull();
+  });
 });
