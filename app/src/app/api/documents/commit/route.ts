@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   for (const item of lineItems) {
     const qty = Math.round(Number(item.qty));
     const numericUnit = Number(String(item.unit).replace(/[^0-9.-]/g, ""));
-    const numericTotal = Number(String(item.total).replace(/[^d.-]/g, ""));
+    const numericTotal = Number(String(item.total).replace(/[^0-9.-]/g, ""));
     const revenue = Number.isFinite(numericTotal) && numericTotal > 0
       ? numericTotal
       : Number.isFinite(numericUnit) && numericUnit > 0
