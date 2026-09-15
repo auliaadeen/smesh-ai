@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   const date = body?.date;
   const lineItems = body?.lineItems ?? [];
 
-  if (!/^d{4}-d{2}-d{2}$/.test(date ?? "")) {
+  if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date ?? "")) {
     return NextResponse.json({ error: "Tanggal transaksi tidak valid" }, { status: 400 });
   }
   if (!["sale", "purchase"].includes(transactionType) || lineItems.length === 0 || !lineItems.every(validLineItem)) {
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
   for (const item of lineItems) {
     const qty = Math.round(Number(item.qty));
-    const numericUnit = Number(String(item.unit).replace(/[^d.-]/g, ""));
+    const numericUnit = Number(String(item.unit).replace(/[^0-9.-]/g, ""));
     const numericTotal = Number(String(item.total).replace(/[^d.-]/g, ""));
     const revenue = Number.isFinite(numericTotal) && numericTotal > 0
       ? numericTotal
