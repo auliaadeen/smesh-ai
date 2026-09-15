@@ -42,12 +42,16 @@ function shiftDate(dateStr: string, deltaDays: number): string {
   return formatDate(shifted);
 }
 
-function todayDate(): string {
-  // Supabase demo data is fixed to August 2026, with the canonical demo date
-  // matching MockBusinessRepository/TODAY. Keep the fixed date as the safe
-  // production fallback so a missing EdgeOne environment variable cannot make
-  // the AI query a future real-world date and return an empty dataset.
-  return process.env.SMESH_DEMO_DATE || DEMO_TODAY;
+async function todayDate(): Promise<string> {
+  const configured = process.env.SMESH_DEMO_DATE;
+  if (configured) return configured;
+  const { data, error } = await getSupabaseServerClient()
+    .from("sales")
+    .select("sold_at")
+    .order("sold_at", { ascending: false })
+    .limit(1);
+  if (!error && data?.[0]?.sold_at) return data[0].sold_at;
+  return DEMO_TODAY;
 }
 
 function checkError(
@@ -61,7 +65,7 @@ function checkError(
 
 export class SupabaseBusinessRepository implements BusinessRepository {
   async getTodaySales(): Promise<TodaySales> {
-    const today = todayDate();
+    const today = await todayDate();
     const { data, error } = await getSupabaseServerClient()
       .from("sales")
       .select("id, product_id, quantity, revenue, sold_at")
@@ -85,7 +89,7 @@ export class SupabaseBusinessRepository implements BusinessRepository {
   }
 
   async getTodayProductSales(limit = 50): Promise<TodayProductSales[]> {
-    const today = todayDate();
+    const today = await todayDate();
     const { data: salesData, error: salesError } = await getSupabaseServerClient()
       .from("sales")
       .select("product_id, quantity, revenue, sold_at")
@@ -122,7 +126,7 @@ export class SupabaseBusinessRepository implements BusinessRepository {
   }
 
   async getSalesComparison(): Promise<SalesComparison> {
-    const today = todayDate();
+    const today = await todayDate();
     const comparisonDate = shiftDate(today, -7);
     const { data, error } = await getSupabaseServerClient()
       .from("sales")
@@ -151,7 +155,7 @@ export class SupabaseBusinessRepository implements BusinessRepository {
   }
 
   async getBestSellers(limit = 5): Promise<BestSeller[]> {
-    const today = todayDate();
+    const today = await todayDate();
     const start = shiftDate(today, -(TRAILING_WINDOW_DAYS - 1));
     const { data: salesData, error: salesError } = await getSupabaseServerClient()
       .from("sales")
@@ -200,7 +204,7 @@ export class SupabaseBusinessRepository implements BusinessRepository {
   }
 
   async getInventoryAlerts(): Promise<InventoryAlert[]> {
-    const today = todayDate();
+    const today = await todayDate();
     const start = shiftDate(today, -(TRAILING_WINDOW_DAYS - 1));
     const { data: inventoryData, error: inventoryError } = await getSupabaseServerClient()
       .from("inventory")
@@ -276,7 +280,7 @@ export class SupabaseBusinessRepository implements BusinessRepository {
   }
 
   async getProductPerformance(productId?: string): Promise<ProductPerformance[]> {
-    const today = todayDate();
+    const today = await todayDate();
     const currentStart = shiftDate(today, -(TRAILING_WINDOW_DAYS - 1));
     const previousEnd = shiftDate(today, -TRAILING_WINDOW_DAYS);
     const previousStart = shiftDate(today, -(2 * TRAILING_WINDOW_DAYS - 1));
@@ -317,7 +321,7 @@ export class SupabaseBusinessRepository implements BusinessRepository {
   }
 
   async getDailyRevenueSeries(days = 14): Promise<{ date: string; revenue: number }[]> {
-    const today = todayDate();
+    const today = await todayDate();
     const start = shiftDate(today, -(days - 1));
     const { data, error } = await getSupabaseServerClient()
       .from("sales")
