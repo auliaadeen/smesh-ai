@@ -27,5 +27,6 @@ export class MockBusinessRepository implements BusinessRepository {
   async getProductPerformance(productId?:string):Promise<ProductPerformance[]>{const currentStart=shiftDate(TODAY,-6);const previousEnd=shiftDate(TODAY,-7);const previousStart=shiftDate(TODAY,-13);const performance=buildProductPerformance(salesBetween(currentStart,TODAY),salesBetween(previousStart,previousEnd),PRODUCTS);return productId?performance.filter(p=>p.productId===productId):performance;}
   async getDailyRevenueSeries(days=14):Promise<{date:string;revenue:number}[]>{const series=[];for(let i=days-1;i>=0;i--){const date=shiftDate(TODAY,-i);series.push({date,revenue:sumRevenue(salesOn(date))});}return series;}
   async getProductStatus(query:string):Promise<ProductStatus|null>{const product=findProduct(query,PRODUCTS);return product?buildProductStatus(product,INVENTORY):null;}
+  async getBusinessDate():Promise<string>{return TODAY;}
 }
 export const mockBusinessRepository=new MockBusinessRepository();

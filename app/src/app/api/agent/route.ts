@@ -12,14 +12,15 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { answer, trace, agentsUsed } = await runBusinessPartner(message, body?.history ?? []);
-    return NextResponse.json({ answer, trace, agentsUsed });
+    const { answer, trace, agentsUsed, steps } = await runBusinessPartner(message, body?.history ?? []);
+    return NextResponse.json({ answer, trace, agentsUsed, steps });
   } catch (err) {
     console.error("[/api/agent] Business Partner error:", err);
     return NextResponse.json({
       answer: "Smesh sedang mengalami kendala saat memproses pertanyaan. Coba lagi beberapa saat.",
       trace: [],
       agentsUsed: [],
+      steps: [],
     });
   }
 }

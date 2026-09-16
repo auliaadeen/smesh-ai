@@ -65,4 +65,31 @@ describe("MockBusinessRepository", () => {
     const status = await mockBusinessRepository.getProductStatus("Kopi");
     expect(status).toBeNull();
   });
+
+  // Phase 3 acceptance TEST H — cross-page consistency: the per-product
+  // breakdown must always sum to the same aggregate the dashboard/AI show.
+  it("keeps today's product breakdown consistent with the today aggregate", async () => {
+    const today = await mockBusinessRepository.getTodaySales();
+    const perProduct = await mockBusinessRepository.getTodayProductSales(50);
+    const sumRevenue = perProduct.reduce((sum, p) => sum + p.revenue, 0);
+    const sumUnits = perProduct.reduce((sum, p) => sum + p.unitsSold, 0);
+    expect(sumRevenue).toBe(today.revenue);
+    expect(sumUnits).toBe(today.unitsSold);
+  });
+
+  it("keeps inventory alert stock consistent with the inventory snapshot", async () => {
+    const snapshot = await mockBusinessRepository.getInventorySnapshot();
+    const alerts = await mockBusinessRepository.getInventoryAlerts();
+    for (const alert of alerts) {
+      const inv = snapshot.find((i) => i.productId === alert.productId);
+      expect(inv?.stock).toBe(alert.currentStock);
+      expect(inv?.minimumStock).toBe(alert.minimumStock);
+    }
+  });
+
+  it("getBusinessDate matches the date getTodaySales anchors to", async () => {
+    const businessDate = await mockBusinessRepository.getBusinessDate();
+    const today = await mockBusinessRepository.getTodaySales();
+    expect(businessDate).toBe(today.date);
+  });
 });

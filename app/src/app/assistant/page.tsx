@@ -11,7 +11,8 @@ const CONTOH_PERTANYAAN = [
   "💡 Apa yang harus saya lakukan hari ini?",
 ];
 
-type ChatMsg = { role: "user" | "assistant"; content: string; agentsUsed?: string[]; isError?: boolean };
+type TraceStep = { tool: string; label: string };
+type ChatMsg = { role: "user" | "assistant"; content: string; agentsUsed?: string[]; steps?: TraceStep[]; isError?: boolean };
 
 export default function AssistantPage() {
   const [chat, setChat] = useState<ChatMsg[]>([]);
@@ -35,7 +36,13 @@ export default function AssistantPage() {
       const json = await res.json();
       setChat((prev) => [
         ...prev,
-        { role: "assistant", content: json.answer ?? "Maaf, gagal dapat jawaban.", agentsUsed: json.agentsUsed },
+        {
+          role: "assistant",
+          content: json.answer ?? "Maaf, gagal dapat jawaban.",
+          agentsUsed: json.agentsUsed,
+          steps: json.steps,
+          isError: !res.ok,
+        },
       ]);
     } catch {
       setChat((prev) => [
@@ -96,10 +103,23 @@ export default function AssistantPage() {
               >
                 {m.content}
                 {m.agentsUsed && m.agentsUsed.length > 0 && (
-                  <p className="mt-2 flex items-center gap-1 border-t border-black/10 pt-2 text-[11px] text-neutral-500 dark:border-white/10">
-                    <ShieldCheck className="h-3 w-3 shrink-0" />
-                    Berdasarkan: {m.agentsUsed.map((a) => `✓ ${a}`).join("  ·  ")}
-                  </p>
+                  <div className="mt-2 space-y-1 border-t border-black/10 pt-2 text-[11px] text-neutral-500 dark:border-white/10">
+                    <p className="flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3 shrink-0" />
+                      Berdasarkan: {m.agentsUsed.map((a) => `✓ ${a}`).join("  ·  ")}
+                    </p>
+                    {m.steps && m.steps.length > 0 && (
+                      <p className="pl-4 text-neutral-400 dark:text-neutral-500">
+                        Tools:{" "}
+                        {m.steps.map((s, idx) => (
+                          <span key={s.tool} title={s.label}>
+                            ✓ {s.tool}
+                            {idx < m.steps!.length - 1 ? "  ·  " : ""}
+                          </span>
+                        ))}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
               {m.role === "user" && (

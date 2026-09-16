@@ -1,7 +1,7 @@
 import type OpenAI from "openai";
 import type { BusinessRepository } from "@/repositories/business-repository";
 import { getBusinessRepository } from "@/repositories";
-import { toolDefinitions, executeTool, type ToolName } from "@/tools";
+import { toolDefinitions, executeTool, TOOL_LABELS, type ToolName } from "@/tools";
 import {
   classifyAgents,
   toolsForAgents,
@@ -35,10 +35,13 @@ ATURAN WAJIB:
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
+export type TraceStep = { tool: string; label: string };
+
 export type BusinessPartnerResult = {
   answer: string;
   trace: string[];
   agentsUsed: string[];
+  steps: TraceStep[];
 };
 
 const MAX_TOOL_ROUNDS = 4;
@@ -58,6 +61,13 @@ const MANDATORY_BROAD_TOOLS: ToolName[] = [
 
 function dedupe(trace: string[]): string[] {
   return [...new Set(trace)];
+}
+
+function buildSteps(trace: string[]): TraceStep[] {
+  return dedupe(trace).map((tool) => ({
+    tool,
+    label: TOOL_LABELS[tool as ToolName] ?? tool,
+  }));
 }
 
 export async function runBusinessPartner(
@@ -132,7 +142,7 @@ export async function runBusinessPartner(
     if (!toolCalls || toolCalls.length === 0) {
       const answer = message.content?.trim();
       if (!answer) throw new Error("Respons OpenAI kosong");
-      return { answer, trace: dedupe(trace), agentsUsed };
+      return { answer, trace: dedupe(trace), agentsUsed, steps: buildSteps(trace) };
     }
 
     messages.push(message);
@@ -172,7 +182,7 @@ export async function runBusinessPartner(
           // keep the regex-extracted fallback
         }
         const answer = `Produk "${askedQuery}" tidak ditemukan di data produk Smesh, jadi saya tidak bisa memberikan status stoknya. Kalau mau, saya bisa menampilkan produk yang saat ini memiliki stok rendah.`;
-        return { answer, trace: dedupe(trace), agentsUsed };
+        return { answer, trace: dedupe(trace), agentsUsed, steps: buildSteps(trace) };
       }
 
       messages.push({

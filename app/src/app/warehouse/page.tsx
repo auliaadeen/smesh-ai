@@ -1,6 +1,7 @@
 import { Package, AlertTriangle, Boxes, ArrowDownToLine } from "lucide-react";
 import { Card, KpiCard, Badge } from "@/components/ui/Card";
 import { getBusinessRepository } from "@/repositories";
+import { calculateReorderQuantity, classifyUrgency, isLowStock } from "@/lib/analytics";
 
 export default async function WarehousePage() {
   const repository = getBusinessRepository();
@@ -10,8 +11,8 @@ export default async function WarehousePage() {
   ]);
   const names = new Map(products.map(p => [p.id, p]));
   const totalStock = inventory.reduce((sum, item) => sum + item.stock, 0);
-  const lowStock = inventory.filter(item => item.stock <= item.minimumStock);
-  const targetGap = inventory.reduce((sum, item) => sum + Math.max(item.targetStock - item.stock, 0), 0);
+  const lowStock = inventory.filter(isLowStock);
+  const targetGap = inventory.reduce((sum, item) => sum + calculateReorderQuantity(item), 0);
 
   return (
     <main className="min-h-screen bg-white px-6 py-10 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 md:px-12">
@@ -40,7 +41,7 @@ export default async function WarehousePage() {
               </tr></thead>
               <tbody>{inventory.map(item => {
                 const product = names.get(item.productId);
-                const critical = item.stock <= item.minimumStock;
+                const critical = classifyUrgency(item) === "critical";
                 return <tr key={item.productId} className="border-b border-neutral-100 last:border-0 dark:border-neutral-900">
                   <td className="py-3 pr-4 font-medium">{product?.name ?? item.productId}</td>
                   <td className="py-3 pr-4 text-neutral-500">{product?.category ?? "—"}</td>
@@ -58,11 +59,12 @@ export default async function WarehousePage() {
               {lowStock.length === 0 && <p className="text-sm text-neutral-500">Semua stok di atas minimum.</p>}
               {lowStock.map(item => {
                 const product = names.get(item.productId);
-                const reorder = Math.max(item.targetStock - item.stock, 0);
+                const urgency = classifyUrgency(item);
+                const reorder = calculateReorderQuantity(item);
                 return <div key={item.productId} className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/20">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium">{product?.name ?? item.productId}</p>
-                    <Badge tone={item.stock <= item.minimumStock / 2 ? "danger" : "warning"}>{item.stock <= item.minimumStock / 2 ? "Critical" : "Low"}</Badge>
+                    <Badge tone={urgency === "critical" ? "danger" : "warning"}>{urgency === "critical" ? "Critical" : "Low"}</Badge>
                   </div>
                   <p className="mt-1 text-xs text-neutral-500">Stok {item.stock} · minimum {item.minimumStock} · rekomendasi +{reorder} unit</p>
                 </div>;

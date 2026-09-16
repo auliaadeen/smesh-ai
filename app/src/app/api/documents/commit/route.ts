@@ -1,42 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { validateCommitRequest, resolveLineItemRevenue, type LineItem } from "@/lib/documentTransaction";
 
-type LineItem = { sku: string; desc: string; qty: number; unit: string; total: string };
-
-function validLineItem(item: LineItem): boolean {
-  return Boolean(item?.sku?.trim()) && Number.isFinite(Number(item.qty)) && Number(item.qty) > 0;
-}
+export type CommitResult = {
+  sale_id: string | null;
+  product_id: string;
+  quantity: number;
+  revenue: number;
+  transaction_type: "sale" | "purchase";
+  date: string;
+  new_stock: number;
+};
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null) as {
+  const body = (await req.json().catch(() => null)) as {
     transactionType?: "sale" | "purchase";
     date?: string;
     lineItems?: LineItem[];
   } | null;
 
-  const transactionType = body?.transactionType ?? "sale";
-  const date = body?.date;
-  const lineItems = body?.lineItems ?? [];
-
-  if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date ?? "")) {
-    return NextResponse.json({ error: "Tanggal transaksi tidak valid" }, { status: 400 });
+  const validated = validateCommitRequest(body);
+  if (!validated.ok) {
+    return NextResponse.json({ error: validated.error }, { status: 400 });
   }
-  if (!["sale", "purchase"].includes(transactionType) || lineItems.length === 0 || !lineItems.every(validLineItem)) {
-    return NextResponse.json({ error: "Data transaksi tidak lengkap" }, { status: 400 });
-  }
+  const { transactionType, date, lineItems } = validated.payload;
 
   const supabase = getSupabaseServerClient();
-  const results: unknown[] = [];
+  const results: CommitResult[] = [];
 
   for (const item of lineItems) {
     const qty = Math.round(Number(item.qty));
-    const numericUnit = Number(String(item.unit).replace(/[^0-9.-]/g, ""));
-    const numericTotal = Number(String(item.total).replace(/[^0-9.-]/g, ""));
-    const revenue = Number.isFinite(numericTotal) && numericTotal > 0
-      ? numericTotal
-      : Number.isFinite(numericUnit) && numericUnit > 0
-        ? numericUnit * qty
-        : 0;
+    const revenue = resolveLineItemRevenue(item, qty);
 
     if (revenue <= 0) {
       return NextResponse.json({ error: `Nominal tidak valid untuk ${item.desc}` }, { status: 400 });
@@ -54,7 +48,7 @@ export async function POST(req: NextRequest) {
       console.error("[/api/documents/commit] Supabase mutation failed:", error);
       return NextResponse.json({ error: error.message }, { status: 502 });
     }
-    results.push(data);
+    results.push(data as CommitResult);
   }
 
   return NextResponse.json({

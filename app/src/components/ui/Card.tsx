@@ -43,7 +43,7 @@ export function KpiCard({
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm text-neutral-600 dark:text-neutral-400">{label}</p>
         {Icon && (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-700/10 text-red-600 dark:text-red-400">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-700/10 text-emerald-600 dark:text-emerald-400">
             <Icon className="h-4 w-4" aria-hidden="true" />
           </div>
         )}

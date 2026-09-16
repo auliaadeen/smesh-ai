@@ -24,4 +24,9 @@ export interface BusinessRepository {
    * null when no product matches — callers must report "not found" and
    * never substitute a different product. */
   getProductStatus(query: string): Promise<ProductStatus | null>;
+  /** The business "today" (YYYY-MM-DD) all other queries are anchored to —
+   * SMESH_DEMO_DATE when set, else the latest sales date, else the fixed
+   * demo baseline. Exposed so the UI can tell a frozen demo date apart from
+   * the real wall-clock date instead of silently implying live data. */
+  getBusinessDate(): Promise<string>;
 }

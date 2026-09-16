@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     const file = formData?.get("file") as File | null;
     const openaiKey = process.env.OPENAI_API_KEY;
 
-    if (openaiKey && file && file.type.startsWith("image/")) {
+    if (openaiKey && file && file.size > 0 && file.type.startsWith("image/")) {
       try {
         const bytes = Buffer.from(await file.arrayBuffer());
         const dataUrl = `data:${file.type};base64,${bytes.toString("base64")}`;

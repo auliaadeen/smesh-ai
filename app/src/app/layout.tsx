@@ -7,6 +7,8 @@ import { MiniSlackPanel } from "@/components/MiniSlackPanel";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PwaRegister } from "@/components/PwaRegister";
 import { AppShell } from "@/components/AppShell";
+import { getBusinessRepository } from "@/repositories";
+import { isDemoBusinessDate } from "@/lib/businessDate";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,7 +25,20 @@ export const viewport: Viewport = {
   themeColor: "#059669",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Fetched once here (not per-page) so every route shares one honest signal
+  // for whether the business data on screen is a frozen demo snapshot or the
+  // real, live-updating day (spec Phase 3 §3). Never let this block the
+  // whole shell from rendering — a Supabase outage is handled per-page by
+  // error.tsx, not by taking down navigation chrome too.
+  let businessDate: string | null = null;
+  try {
+    businessDate = await getBusinessRepository().getBusinessDate();
+  } catch {
+    businessDate = null;
+  }
+  const isDemoMode = businessDate !== null && isDemoBusinessDate(businessDate);
+
   return (
     <html lang="id" className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full flex flex-col font-sans">
@@ -31,7 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <AuthProvider>
             <NotificationProvider>
               <MiniSlackProvider>
-                <AppShell>{children}</AppShell>
+                <AppShell businessDate={businessDate} isDemoMode={isDemoMode}>{children}</AppShell>
                 <MiniSlackPanel />
                 <CommandPalette />
               </MiniSlackProvider>

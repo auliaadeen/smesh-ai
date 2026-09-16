@@ -17,6 +17,19 @@ export const TOOL_NAMES = [
 
 export type ToolName = (typeof TOOL_NAMES)[number];
 
+// Plain-language, non-technical explanation of what each tool actually did —
+// shown to UMKM owners in the AI trace UX (spec Phase 3 §10). Deliberately
+// short and free of implementation detail (no payloads, no prompts).
+export const TOOL_LABELS: Record<ToolName, string> = {
+  get_today_sales: "Sales Agent membaca data penjualan hari ini.",
+  get_today_product_sales: "Sales Agent merinci produk yang terjual hari ini.",
+  get_sales_comparison: "Sales Agent membandingkan omzet dengan minggu lalu.",
+  get_best_sellers: "Product Agent mengambil produk paling laku 7 hari terakhir.",
+  get_inventory_alerts: "Inventory Agent memeriksa produk di bawah minimum stock.",
+  get_product_performance: "Product Agent menganalisis performa produk.",
+  get_product_status: "Inventory Agent mengecek status stok satu produk spesifik.",
+};
+
 export const toolDefinitions: OpenAI.Chat.Completions.ChatCompletionTool[] = [
   {
     type: "function",

@@ -348,6 +348,10 @@ export class SupabaseBusinessRepository implements BusinessRepository {
     const inventory = await this.getInventorySnapshot();
     return buildProductStatus(product, inventory);
   }
+
+  async getBusinessDate(): Promise<string> {
+    return todayDate();
+  }
 }
 
 export const supabaseBusinessRepository = new SupabaseBusinessRepository();

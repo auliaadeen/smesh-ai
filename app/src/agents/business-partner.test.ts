@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import type OpenAI from "openai";
 import { runBusinessPartner } from "@/agents/business-partner";
 import { mockBusinessRepository } from "@/repositories/mock-business-repository";
+import type { BusinessRepository } from "@/repositories/business-repository";
 import type { AIProvider, ToolCompletionParams, ToolCompletionResult } from "@/lib/ai";
 
 type Msg = OpenAI.Chat.Completions.ChatCompletionMessage;
@@ -107,5 +108,54 @@ describe("runBusinessPartner", () => {
 
     expect(result.trace).toContain("get_inventory_alerts");
     expect(result.agentsUsed).toEqual(["Inventory Agent"]);
+  });
+
+  // Phase 3 acceptance TEST K — the trace must come with a human-readable
+  // label per tool, not just the raw function name.
+  it("returns human-readable trace steps alongside the raw tool trace", async () => {
+    const provider = new QueueProvider([
+      toolCallMessage("get_inventory_alerts", {}),
+      finalMessage("Ini yang harus direstock."),
+    ]);
+    const result = await runBusinessPartner("Produk yang harus di-restock?", [], mockBusinessRepository, provider);
+
+    expect(result.steps).toEqual([
+      { tool: "get_inventory_alerts", label: expect.stringContaining("Inventory Agent") },
+    ]);
+  });
+
+  // Phase 3 acceptance TEST G — after a confirmed mutation, the next
+  // question must hit the repository again, never a stale cached value.
+  it("queries the repository fresh on every call instead of caching", async () => {
+    const getProductStatus = vi.fn(async (query: string) => mockBusinessRepository.getProductStatus(query));
+    const repo: BusinessRepository = {
+      getTodaySales: (...a) => mockBusinessRepository.getTodaySales(...a),
+      getTodayProductSales: (...a) => mockBusinessRepository.getTodayProductSales(...a),
+      getSalesComparison: (...a) => mockBusinessRepository.getSalesComparison(...a),
+      getBestSellers: (...a) => mockBusinessRepository.getBestSellers(...a),
+      getInventoryAlerts: (...a) => mockBusinessRepository.getInventoryAlerts(...a),
+      getInventorySnapshot: (...a) => mockBusinessRepository.getInventorySnapshot(...a),
+      getProducts: (...a) => mockBusinessRepository.getProducts(...a),
+      getProductPerformance: (...a) => mockBusinessRepository.getProductPerformance(...a),
+      getDailyRevenueSeries: (...a) => mockBusinessRepository.getDailyRevenueSeries(...a),
+      getBusinessDate: (...a) => mockBusinessRepository.getBusinessDate(...a),
+      getProductStatus,
+    };
+
+    const provider1 = new QueueProvider([
+      toolCallMessage("get_product_status", { query: "Kopi Arabica" }),
+      finalMessage("Stok sekian."),
+    ]);
+    await runBusinessPartner("Bagaimana stok Kopi Arabica?", [], repo, provider1);
+
+    const provider2 = new QueueProvider([
+      toolCallMessage("get_product_status", { query: "Kopi Arabica" }),
+      finalMessage("Stok sekian lagi."),
+    ]);
+    await runBusinessPartner("Bagaimana stok Kopi Arabica?", [], repo, provider2);
+
+    // Two independent questions must mean two independent repository reads —
+    // no memoized/stale result reused across calls.
+    expect(getProductStatus).toHaveBeenCalledTimes(2);
   });
 });
