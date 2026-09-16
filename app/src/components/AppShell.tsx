@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { Search, Menu, History } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { CommandSidebar } from "@/components/CommandSidebar";
 import { AccountBadge } from "@/components/AccountBadge";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -14,28 +14,7 @@ const STANDALONE_ROUTES = new Set(["/login", "/email-setup/login"]);
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-neutral-950";
 
-function formatBusinessDate(date: string): string {
-  try {
-    return new Date(`${date}T00:00:00Z`).toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
-    });
-  } catch {
-    return date;
-  }
-}
-
-export function AppShell({
-  children,
-  businessDate,
-  isDemoMode = false,
-}: {
-  children: ReactNode;
-  businessDate?: string | null;
-  isDemoMode?: boolean;
-}) {
+export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const standalone = STANDALONE_ROUTES.has(pathname);
@@ -68,15 +47,6 @@ export function AppShell({
               <Menu className="h-4 w-4" />
             </button>
             <div className="flex-1" />
-            {isDemoMode && businessDate && (
-              <span
-                title="Data bisnis yang ditampilkan berasal dari snapshot demo, bukan tanggal hari ini yang sebenarnya."
-                className="hidden items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-400 sm:flex"
-              >
-                <History className="h-3 w-3" aria-hidden="true" />
-                Demo Business Data · {formatBusinessDate(businessDate)}
-              </span>
-            )}
             <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
