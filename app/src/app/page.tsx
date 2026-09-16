@@ -6,6 +6,13 @@ import { RevenueTrendChart } from "@/components/dashboard/RevenueTrendChart";
 import { getBusinessRepository } from "@/repositories";
 import { buildRecommendations } from "@/lib/recommendations";
 
+// Nothing on this page reads a Next.js Dynamic API (cookies/headers/params),
+// so without this Next statically prerenders it at build time and serves
+// that frozen snapshot in production — a confirmed Document AI transaction
+// would never show up here until the next build. Forcing dynamic rendering
+// makes every request hit Supabase fresh (Phase 4 root-cause fix).
+export const dynamic = "force-dynamic";
+
 const modules = [
   { href: "/sales", title: "Sales", desc: "Omzet, growth, tren penjualan", icon: TrendingUp },
   { href: "/inventory", title: "Inventory", desc: "Stok kritis & rekomendasi reorder", icon: Package },

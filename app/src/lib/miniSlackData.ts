@@ -37,7 +37,7 @@ export const miniSlackSeed: Message[] = [
     id: "MSG-SEED-02",
     channelSlug: "email-setup",
     author: "system",
-    content: "✉️ Request deen@hti.co.id naik status ke COMPLETED",
+    content: "✉️ Request deen@smesh.com naik status ke COMPLETED",
     createdAt: "2026-08-10T03:15:00.000Z",
   },
   {

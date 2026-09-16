@@ -3,6 +3,10 @@ import { Card, KpiCard } from "@/components/ui/Card";
 import { RevenueTrendChart } from "@/components/dashboard/RevenueTrendChart";
 import { getBusinessRepository } from "@/repositories";
 
+// Forces per-request Supabase reads instead of a frozen build-time snapshot
+// — see src/app/page.tsx for the full root-cause writeup (Phase 4).
+export const dynamic = "force-dynamic";
+
 function formatRupiah(value: number): string {
   return `Rp${value.toLocaleString("id-ID")}`;
 }

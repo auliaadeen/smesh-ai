@@ -80,9 +80,9 @@ export function DocumentAiClient({ defaultDate }: { defaultDate: string }) {
   return (
     <main className="min-h-screen bg-white px-6 py-10 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 md:px-12">
       <div className="mx-auto max-w-6xl">
-        <p className="text-sm font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Document AI</p>
+        <p className="text-sm font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Smesh Document AI</p>
         <h1 className="mt-1 text-3xl font-bold">Dari dokumen menjadi business data.</h1>
-        <p className="mt-2 max-w-3xl text-neutral-600 dark:text-neutral-400">Upload → ekstraksi → review/edit → confirm → update Supabase. Ini adalah transformasi capability Document AI dari HTI ke workflow Smesh.</p>
+        <p className="mt-2 max-w-3xl text-neutral-600 dark:text-neutral-400">Upload → ekstraksi → review/edit → confirm → update Supabase. Document AI membantu memasukkan transaksi bisnismu ke Smesh tanpa entri manual.</p>
 
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Card>

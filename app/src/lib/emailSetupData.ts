@@ -82,8 +82,8 @@ export const emailSetupRequestsSeed: EmailSetupRequest[] = [
   {
     id: nextId(1),
     personalEmail: "deen@gmail.com",
-    targetDomainEmail: "deen@hti.co.id",
-    displayName: "Deen — HTI",
+    targetDomainEmail: "deen@smesh.com",
+    displayName: "Deen — Smesh",
     status: "COMPLETED",
     timeline: [
       seedEvent("TL-SEED-01", "Rule Cloudflare Dibuat", "success", "Rule forward dibuat di Cloudflare Email Routing.", "2026-08-10T02:00:00.000Z"),
@@ -97,8 +97,8 @@ export const emailSetupRequestsSeed: EmailSetupRequest[] = [
   {
     id: nextId(2),
     personalEmail: "franky@gmail.com",
-    targetDomainEmail: "franky@hti.co.id",
-    displayName: "Franky Jonly — HTI",
+    targetDomainEmail: "franky@smesh.com",
+    displayName: "Franky Jonly — Smesh",
     status: "VERIFICATION_SENT",
     timeline: [
       seedEvent("TL-SEED-05", "Rule Cloudflare Dibuat", "success", "Rule forward dibuat di Cloudflare Email Routing.", "2026-08-18T04:00:00.000Z"),

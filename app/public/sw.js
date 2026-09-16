@@ -2,7 +2,7 @@
 // (walau seadanya) saat offline, dan supaya browser anggap app ini
 // "installable". Bukan sistem caching penuh, cukup buat demo.
 
-const CACHE_NAME = "hti-poc-shell-v1";
+const CACHE_NAME = "smesh-poc-shell-v1";
 const APP_SHELL = ["/", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

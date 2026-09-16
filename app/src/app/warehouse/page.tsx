@@ -3,6 +3,10 @@ import { Card, KpiCard, Badge } from "@/components/ui/Card";
 import { getBusinessRepository } from "@/repositories";
 import { calculateReorderQuantity, classifyUrgency, isLowStock } from "@/lib/analytics";
 
+// Forces per-request Supabase reads instead of a frozen build-time snapshot
+// — see src/app/page.tsx for the full root-cause writeup (Phase 4).
+export const dynamic = "force-dynamic";
+
 export default async function WarehousePage() {
   const repository = getBusinessRepository();
   const [inventory, products] = await Promise.all([
@@ -17,10 +21,10 @@ export default async function WarehousePage() {
   return (
     <main className="min-h-screen bg-white px-6 py-10 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 md:px-12">
       <div className="mx-auto max-w-6xl">
-        <p className="text-sm font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Warehouse Visibility</p>
+        <p className="text-sm font-semibold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Smesh Warehouse</p>
         <h1 className="mt-1 text-3xl font-bold">Satu layar untuk kondisi stok.</h1>
         <p className="mt-2 max-w-2xl text-neutral-600 dark:text-neutral-400">
-          Capability Warehouse dari HTI ditransformasi menjadi inventory visibility Smesh. Angka berasal dari Supabase yang sama dengan AI Business Partner.
+          Smesh Inventory Intelligence untuk kondisi gudangmu. Angka berasal dari Supabase yang sama dengan AI Business Partner.
         </p>
 
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">

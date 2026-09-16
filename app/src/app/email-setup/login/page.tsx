@@ -10,7 +10,7 @@ import { useEmailSetup } from "@/lib/EmailSetupContext";
 
 export default function EmailSetupLoginPage() {
   const { login } = useEmailSetup();
-  const [email, setEmail] = useState("demo@hti.co.id");
+  const [email, setEmail] = useState("demo@smesh.com");
   const [password, setPassword] = useState("demo123");
   const [error, setError] = useState(false);
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function EmailSetupLoginPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="deen@hti.co.id"
+            placeholder="deen@smesh.com"
             autoComplete="off"
             suppressHydrationWarning
             className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900"

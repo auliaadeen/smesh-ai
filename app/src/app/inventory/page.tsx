@@ -3,6 +3,10 @@ import { Card, Badge } from "@/components/ui/Card";
 import { getBusinessRepository } from "@/repositories";
 import { buildRecommendations, type RecommendationPriority } from "@/lib/recommendations";
 
+// Forces per-request Supabase reads instead of a frozen build-time snapshot
+// — see src/app/page.tsx for the full root-cause writeup (Phase 4).
+export const dynamic = "force-dynamic";
+
 const PRIORITY_TONE: Record<RecommendationPriority, "danger" | "warning" | "neutral"> = { CRITICAL: "danger", WARNING: "warning", NORMAL: "neutral" };
 const PRIORITY_LABEL: Record<RecommendationPriority, string> = { CRITICAL: "🔴 Prioritas Tinggi", WARNING: "🟠 Perlu Perhatian", NORMAL: "Info" };
 
