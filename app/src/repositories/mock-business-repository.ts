@@ -1,5 +1,5 @@
 import type {
-  Product, Sale, TodaySales, TodayProductSales, SalesComparison, BestSeller,
+  Product, TodaySales, TodayProductSales, SalesComparison, BestSeller,
   InventoryAlert, ProductPerformance, Inventory, ProductStatus,
 } from "@/types/business";
 import type { BusinessRepository } from "@/repositories/business-repository";
